@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  owner
+  member
+}
+
+enum UserAccessStatus {
+  pending
+  active
+  suspended
+  rejected
+}
+
+enum AccessRequestStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+model User {
+  id                     String          @id @default(uuid())
+  email                  String          @unique
+  displayName            String?         @map("display_name")
+  passwordHash           String?         @map("password_hash")
+  role                   UserRole        @default(member)
+  accessStatus           UserAccessStatus @default(pending) @map("access_status")
+  approvedAt             DateTime?       @map("approved_at")
+  approvedByUserId       String?         @map("approved_by_user_id")
+  approvedByUser         User?           @relation("UserApprovals", fields: [approvedByUserId], references: [id])
+  approvedUsers          User[]          @relation("UserApprovals")
+  lastLoginAt            DateTime?       @map("last_login_at")
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @updatedAt @map("updated_at")
+  reviewedAccessRequests AccessRequest[] @relation("RequestReviewer")
+  linkedAccessRequests   AccessRequest[] @relation("RequestLinkedUser")
+
+  @@map("users")
+}
+
+model AccessRequest {
+  id             String              @id @default(uuid())
+  email          String
+  displayName    String?             @map("display_name")
+  message        String?
+  status         AccessRequestStatus @default(pending)
+  requestedAt    DateTime            @default(now()) @map("requested_at")
+  reviewedAt     DateTime?           @map("reviewed_at")
+  reviewerUserId String?             @map("reviewer_user_id")
+  linkedUserId   String?             @map("linked_user_id")
+  decisionNote   String?             @map("decision_note")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  reviewerUser   User?               @relation("RequestReviewer", fields: [reviewerUserId], references: [id])
+  linkedUser     User?               @relation("RequestLinkedUser", fields: [linkedUserId], references: [id])
+
+  @@index([status, requestedAt(sort: Desc)])
+  @@map("access_requests")
+}

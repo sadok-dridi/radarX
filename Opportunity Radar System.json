@@ -1,0 +1,1289 @@
+{
+  "name": "Opportunity Radar System",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a1bcfb0f-2407-4e71-8206-91effa9f6c84",
+              "leftValue": "={{ $json.action}}",
+              "rightValue": "telegram",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        -768
+      ],
+      "id": "96e639b0-8069-4323-8080-04e5a9eca7f2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        -1200
+      ],
+      "id": "cb0b2677-b342-42ec-befd-89f973092504",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.reddit.com/subreddits/search.rss?q= {{ $json['[\\'Keyword List\\']'] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            },
+            {
+              "name": "Accept",
+              "value": "application/rss+xml"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 400
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -160,
+        -992
+      ],
+      "id": "680aa597-fb07-4e15-af69-454fde57c8d1",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const resultsMap = new Map(); \n\n// ---------- helpers ----------\nfunction extract(entry, regex) {\n  const match = entry.match(regex);\n  return match ? match[1].trim() : \"\";\n}\n\nfunction cleanDescription(raw) {\n  if (!raw) return \"\";\n\n  return raw\n    .replace(/&lt;img[\\s\\S]*?&gt;/gi, \"\")\n    .replace(/<img[\\s\\S]*?>/gi, \"\")\n    .replace(/&lt;a[\\s\\S]*?\\[link\\]/gi, \"\")\n    .replace(/<a[\\s\\S]*?\\[link\\]/gi, \"\")\n    .replace(/&lt;[\\s\\S]*?&gt;/g, \"\")\n    .replace(/<[\\s\\S]*?>/g, \"\")\n    .replace(/&amp;/g, \"&\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction extractSubredditFromLink(link) {\n  if (!link || !link.includes(\"/r/\")) return \"\";\n  return link.split(\"/r/\")[1]?.split(\"/\")[0]?.toLowerCase() || \"\";\n}\n\n// ---------- main ----------\nfor (const item of $input.all()) {\n  const xml = item.json.data;\n  if (!xml) continue;\n\n  const entries = xml.match(/<entry>([\\s\\S]*?)<\\/entry>/g) || [];\n\n  for (const entry of entries) {\n    const title = cleanDescription(\n      extract(entry, /<title[^>]*>([\\s\\S]*?)<\\/title>/)\n    );\n\n    const link = extract(entry, /<link[^>]*href=\"([^\"]+)\"/);\n    const updated = extract(entry, /<updated[^>]*>([\\s\\S]*?)<\\/updated>/);\n\n    const description = cleanDescription(\n      extract(entry, /<content[^>]*>([\\s\\S]*?)<\\/content>/)\n    );\n\n    const subreddit = extractSubredditFromLink(link);\n    if (!subreddit) continue;\n\n    const existing = resultsMap.get(subreddit);\n\n    // Decide whether to keep this entry\n    if (!existing) {\n      resultsMap.set(subreddit, {\n        subreddit,\n        title,\n        description,\n        link,\n        updated,\n        source: \"reddit_rss\",\n        parsedAt: new Date().toISOString()\n      });\n    } else {\n      \n      const betterDescription =\n        description.length > (existing.description?.length || 0);\n\n      const newerUpdate =\n        updated && (!existing.updated || updated > existing.updated);\n\n      if (betterDescription || newerUpdate) {\n        resultsMap.set(subreddit, {\n          ...existing,\n          title: title || existing.title,\n          description: description || existing.description,\n          updated: newerUpdate ? updated : existing.updated,\n          parsedAt: new Date().toISOString()\n        });\n      }\n    }\n  }\n}\n\n// ---------- output ----------\nreturn Array.from(resultsMap.values()).map(row => ({\n  json: row\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -1200
+      ],
+      "id": "e0afc00f-d3b9-4fd4-978e-a426af896b30",
+      "name": "Discover"
+    },
+    {
+      "parameters": {
+        "jsCode": "const JOB_KEYWORDS = [\n  \"looking for\",\n  \"need help\",\n  \"need someone\",\n  \"hire\",\n  \"hiring\",\n  \"for hire\",\n  \"paid\",\n  \"budget\",\n  \"quote\",\n  \"rate\",\n  \"contract\",\n  \"freelancer\",\n  \"consultant\",\n  \"agency\",\n  \"outsourcing\"\n];\nconst BUILD_KEYWORDS = [\n  \"build\",\n  \"create\",\n  \"develop\",\n  \"set up\",\n  \"implement\",\n  \"design\",\n  \"custom\",\n  \"automation\",\n  \"workflow\",\n  \"script\",\n  \"api\",\n  \"bot\",\n  \"dashboard\",\n  \"website\",\n  \"landing page\",\n  \"mvp\",\n  \"integration\",\n  \"crm\"\n];\nconst PAIN_KEYWORDS = [\n  \"manual\",\n  \"artist\",\n  \"time-consuming\",\n  \"inefficient\",\n  \"scale\",\n  \"process\",\n  \"messy\",\n  \"spreadsheet\",\n  \"follow up\",\n  \"lead management\",\n  \"reporting\",\n  \"operations\"\n];\n\nconst BAD_KEYWORDS = [\n  \"game\",\n  \"artist\",\n  \"gaming\",\n  \"politics\",\n  \"president\",\n  \"news\",\n  \"memes\",\n  \"entertainment\",\n  \"movie\",\n  \"tv\",\n  \"music\",\n  \"opinion\",\n  \"thoughts\",\n  \"what do you think\",\n  \"discussion only\"\n];\nfunction countMatches(text, keywords) {\n  return keywords.reduce((count, k) => text.includes(k) ? count + 1 : count, 0);\n}\n\nconst MIN_SCORE = 5;\nconst results = [];\n\nfor (const item of $input.all()) {\n  const title = (item.json.title || \"\").toLowerCase();\n  const desc = (item.json.description || \"\").toLowerCase();\n  const link = item.json.link || \"\";\n\n  let score = 0;\n\n \n  score += countMatches(desc, JOB_KEYWORDS) * 5;\n  score += countMatches(desc, BUILD_KEYWORDS) * 3;\n  score += countMatches(desc, PAIN_KEYWORDS) * 2;\n  \n  \n  if (desc.includes(\"script\") || desc.includes(\"api\")) score += 2;\n  if (desc.includes(\"tool\") || desc.includes(\"workflow\")) score += 2;\n\n  \n  score -= countMatches(title, BAD_KEYWORDS) * 4;\n  score -= countMatches(desc, BAD_KEYWORDS) * 3;\n\n  \n  if (desc.length > 120) score += 1;\n  if (link.includes(\"/r/\")) score += 1;\n\n  if (score >= MIN_SCORE) {\n    results.push({\n      json: {\n        subreddit: item.json.subreddit,\n        link,\n        score,\n        category:\n          score >= 10 ? \"🔥 High-value\" :\n          score >= 7 ? \"✅ Good\" :\n          \"⚠️ Medium\"\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -1200
+      ],
+      "id": "e1f7e126-d8b0-45dd-91a1-d775f439caf1",
+      "name": "Scoring",
+      "notes": "const PAIN_KEYWORDS = [\n  \"manual\",\n  \"time-consuming\",\n  \"inefficient\",\n  \"scale\",\n  \"process\",\n  \"messy\",\n  \"spreadsheet\",\n  \"follow up\",\n  \"lead management\",\n  \"reporting\",\n  \"operations\"\n];\nconst BUILD_KEYWORDS = [\n  \"build\",\n  \"create\",\n  \"develop\",\n  \"set up\",\n  \"implement\",\n  \"design\",\n  \"custom\",\n  \"automation\",\n  \"workflow\",\n  \"script\",\n  \"api\",\n  \"bot\",\n  \"dashboard\",\n  \"website\",\n  \"landing page\",\n  \"mvp\",\n  \"integration\",\n  \"crm\"\n];\nconst JOB_KEYWORDS = [\n  \"looking for\",\n  \"need help\",\n  \"need someone\",\n  \"hire\",\n  \"hiring\",\n  \"for hire\",\n  \"paid\",\n  \"budget\",\n  \"quote\",\n  \"rate\",\n  \"contract\",\n  \"freelancer\",\n  \"consultant\",\n  \"agency\",\n  \"outsourcing\"\n];\n"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst results = [];\n\nfor (const item of $input.all()) {\n  const score = item.json.score || 0;\n  const category = item.json.category || \"\";\n  const prevFirstSeen = item.json.first_seen;\n  const prevLastSeen = item.json.last_seen;\n\n  \n  const firstSeen = prevFirstSeen\n    ? new Date(prevFirstSeen)\n    : now;\n\n  const lastSeenPrev = prevLastSeen\n    ? new Date(prevLastSeen)\n    : now;\n\n  const daysSinceLastSeen = Math.floor(\n    (now - lastSeenPrev) / (1000 * 60 * 60 * 24)\n  );\n\n  const weeksAlive = Math.max(\n    1,\n    Math.floor((now - firstSeen) / (1000 * 60 * 60 * 24 * 7))\n  );\n\n  let confidence = score * 10;\n\n  confidence += Math.min(weeksAlive * 5, 30);\n\n  if (category.includes(\"High\")) confidence += 20;\n  else if (category.includes(\"Good\")) confidence += 10;\n\n  if (daysSinceLastSeen > 60) confidence = 0;\n  else if (daysSinceLastSeen > 30) confidence -= 30;\n  else if (daysSinceLastSeen > 7) confidence -= 10;\n\n  confidence = Math.max(0, Math.min(100, confidence));\n\n  let status = \"Candidate\";\n  let action = \"Monitored\";\n\n  if (confidence >= 90) {\n    status = \"Evergreen\";\n    action = \"Always scanned\";\n  } else if (confidence >= 70) {\n    status = \"Validated\";\n    action = \"Scanned\";\n  } else if (confidence >= 30) {\n    status = \"Candidate\";\n    action = \"Monitored\";\n  } else {\n    status = \"Archived\";\n    action = \"Ignored\";\n  }\n\n  results.push({\n    json: {\n      subreddit: item.json.subreddit,\n      link: item.json.link,\n      score,\n      category,\n      confidence,\n      status,\n      action,\n      first_seen: firstSeen.toISOString(),\n      last_seen: now.toISOString()\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -976
+      ],
+      "id": "7e26d488-f953-42f3-bbf7-4fc199d8c0ca",
+      "name": "Confidence Engine"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "subreddit",
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        544,
+        -1184
+      ],
+      "id": "f71640e2-757e-49c1-9301-1b833f05681e",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -384,
+        -496
+      ],
+      "id": "fbb62c31-1d79-414f-beb7-0953989da380",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a631230e-165c-4ac1-af82-f6337e086dd0",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "Always scanned",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -160,
+        -704
+      ],
+      "id": "8429f479-f2ad-4e98-a8be-fa3661826955",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "content": "## Subreddit Radar \n[Guide](https://docs.n8n.io/workflows/components/sticky-notes/)",
+        "height": 448,
+        "width": 1264,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -464,
+        -1264
+      ],
+      "typeVersion": 1,
+      "id": "276ccda3-aed7-4438-b4c0-878467a0d608",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31a7d8c1-c08d-4e28-aadb-ada372c04ed2",
+              "name": "Keyword List",
+              "value": "={{ [\n  \"freelance\",\n  \"freelancing\",\n  \"hiring\",\n  \"for hire\",\n  \"jobs\",\n  \"remote jobs\",\n  \"contract work\",\n  \"startup\",\n  \"founders\",\n  \"small business\",\n  \"agency\",\n  \"entrepreneur\",\n  \"automation\",\n  \"workflow\",\n  \"web development\",\n  \"website\",\n  \"online business\",\n  \"upwork\",\n  \"fiverr\",\n  \"freelancer\",\n] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        -1200
+      ],
+      "id": "8890f14b-15dd-49d4-b352-a265edd4575a",
+      "name": "keys",
+      "notesInFlow": false,
+      "notes": "const SUBREDDIT_SEARCH_KEYWORDS = [\n  // core work & jobs\n  \"freelance\",\n  \"freelancing\",\n  \"hiring\",\n  \"for hire\",\n  \"jobs\",\n  \"remote jobs\",\n  \"contract work\",\n\n  // business needs\n  \"startup\",\n  \"founders\",\n  \"small business\",\n  \"agency\",\n  \"entrepreneur\",\n\n  // execution & building\n  \"no-code\",\n  \"low-code\",\n  \"automation\",\n  \"workflow\",\n  \"saas\",\n  \"web development\",\n  \"website\",\n  \"mvp\",\n\n  // side income\n  \"side project\",\n  \"side hustle\",\n  \"online business\",\n\n  // platforms people hire from\n  \"upwork\",\n  \"fiverr\",\n  \"freelancer\",\n  \"consulting\"\n];\n"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "['Keyword List']",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        -992
+      ],
+      "id": "30047365-0c4a-45b7-9bfc-bdc92e0e9412",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "content": "## Job Radar\n",
+        "height": 736,
+        "width": 1552
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -464,
+        -784
+      ],
+      "typeVersion": 1,
+      "id": "552e71fd-2bd9-413b-aec1-4cebc6182ec8",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1j7ttu60fMY9m77wiWyW_P9g8iYETlZXaZD1Uad4paKI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j7ttu60fMY9m77wiWyW_P9g8iYETlZXaZD1Uad4paKI/edit#gid=0"
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        -976
+      ],
+      "id": "2664c824-2f1d-4353-8206-5366fa56f30c",
+      "name": "Subreddit Radar",
+      "executeOnce": true,
+      "retryOnFail": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "mesGdlqAKTSuoqjF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1j7ttu60fMY9m77wiWyW_P9g8iYETlZXaZD1Uad4paKI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j7ttu60fMY9m77wiWyW_P9g8iYETlZXaZD1Uad4paKI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "subreddit": "={{ $json.subreddit }}",
+            "link": "={{ $json.link }}",
+            "score": "={{ $json.score }}",
+            "category": "={{ $json.category }}",
+            "confidence": "={{ $json.confidence }}",
+            "status": "={{ $json.status }}",
+            "action": "={{ $json.action }}",
+            "first_seen": "={{ $json.first_seen }}",
+            "last_seen": "={{ $json.last_seen }}"
+          },
+          "matchingColumns": [
+            "subreddit"
+          ],
+          "schema": [
+            {
+              "id": "subreddit",
+              "displayName": "subreddit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "first_seen",
+              "displayName": "first_seen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_seen",
+              "displayName": "last_seen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        592,
+        -976
+      ],
+      "id": "8c84fbe0-9a7f-46ff-b948-58893730d7cd",
+      "name": "Append and update",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "mesGdlqAKTSuoqjF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1j7ttu60fMY9m77wiWyW_P9g8iYETlZXaZD1Uad4paKI/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1j7ttu60fMY9m77wiWyW_P9g8iYETlZXaZD1Uad4paKI/edit#gid=0"
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -400,
+        -704
+      ],
+      "id": "70f049a3-86c6-4562-beb4-df43f39784d5",
+      "name": "Subreddit Radar1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "mesGdlqAKTSuoqjF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://www.reddit.com/r/{{ $json.subreddit }}/new/.rss",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -368,
+        -272
+      ],
+      "id": "146b4df8-c8de-4abc-b402-b1b2e3070b21",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\n/* ---------- helpers ---------- */\nfunction extract(entry, regex) {\n  const m = entry.match(regex);\n  return m ? m[1].trim() : \"\";\n}\n\nfunction decodeEntities(text = \"\") {\n  return text\n    .replace(/&amp;/g, \"&\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&#32;/g, \" \")\n    .replace(/&lt;/g, \"<\")\n    .replace(/&gt;/g, \">\");\n}\n\nfunction cleanText(raw = \"\") {\n  return decodeEntities(raw)\n    .replace(/<img[\\s\\S]*?>/gi, \"\")\n    .replace(/<a[^>]*>(.*?)<\\/a>/gi, \"$1\")\n    .replace(/<[^>]+>/g, \"\")\n    .replace(/\\[comments\\]/gi, \"\")\n    .replace(/submitted by[\\s\\S]*$/gi, \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction extractBody(entry) {\n  let body = extract(entry, /<div class=\"md\">([\\s\\S]*?)<\\/div>/);\n\n  if (!body) {\n    body = extract(entry, /<content[^>]*>([\\s\\S]*?)<\\/content>/);\n  }\n\n  return cleanText(body);\n}\n\n\n/* ---------- main ---------- */\nfor (const item of $input.all()) {\n  const xml = item.json.data;\n  if (!xml) continue;\n\n  const entries = xml.match(/<entry>([\\s\\S]*?)<\\/entry>/g) || [];\n\n  for (const entry of entries) {\n    const title = cleanText(\n      extract(entry, /<title[^>]*>([\\s\\S]*?)<\\/title>/)\n    );\n\n    const content = extractBody(entry);\n\n    const link = extract(entry, /<link[^>]*href=\"([^\"]+)\"/);\n    const published = extract(entry, /<published[^>]*>([\\s\\S]*?)<\\/published>/);\n\n    if (!link || !title) continue;\n\n    \n\n    results.push({\n      json: {\n        subreddit: link.split(\"/r/\")[1]?.split(\"/\")[0] || \"\",\n        title,\n        content,\n        link,\n        published,\n        scannedAt: new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        -272
+      ],
+      "id": "0622847f-1c32-45d8-be60-a33788f826ef",
+      "name": "CleanText",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => ({\n  json: {\n    ...item.json,\n    text: `${item.json.title} ${item.json.content}`.toLowerCase()\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        -464
+      ],
+      "id": "897cba91-4a6a-4ab2-9df5-dfa7b45b112c",
+      "name": "parsing"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===============================\n// CONFIG\n// ===============================\n\nconst HIRING_KEYWORDS = [\n  \"hiring\",\n  \"looking for\",\n  \"need a\",\n  \"need help\",\n  \"seeking\",\n  \"we are hiring\",\n  \"job\",\n  \"position\",\n  \"role\",\n  \"contract\",\n  \"freelancer needed\"\n];\n\nconst MONEY_KEYWORDS = [\n  \"$\",\n  \"usd\",\n  \"salary\",\n  \"budget\",\n  \"paid\",\n  \"payment\",\n  \"rate\",\n  \"/hr\",\n  \"per hour\"\n];\n\nconst SKILL_KEYWORDS = [\n  \"website\",\n  \"web app\",\n  \"landing page\",\n  \"saas\",\n  \"automation\",\n  \"ai\",\n  \"api\",\n  \"bot\",\n  \"scraping\",\n  \"n8n\",\n  \"nocode\",\n  \"dashboard\",\n  \"shopify\",\n  \"wordpress\",\n  \"react\",\n  \"backend\",\n  \"frontend\"\n];\n\n// Soft negatives (self-promo freelancers)\nconst NEGATIVE_KEYWORDS = [\n  \"[for hire]\",\n  \"[available]\",\n  \"commission open\",\n  \"open for work\"\n];\n\n// Hard negatives (never jobs)\nconst HARD_NEGATIVE_PATTERNS = [\n  \"i am looking for\",\n  \"looking for work\",\n  \"need a job\",\n  \"any job\",\n  \"please help me\",\n  \"rant\",\n  \"guide\",\n  \"discussion\",\n  \"experience\",\n  \"my journey\",\n  \"i built\",\n  \"i created\",\n  \"i launched\",\n  \"we built\",\n  \"case study\",\n  \"thoughts on\",\n  \"is it possible\",\n  \"welcome to\",\n  \"announcement\"\n];\n\n// Strong employer-only intent\nconst EMPLOYER_INTENT = [\n  \"[hiring]\",\n  \"we are hiring\",\n  \"we are looking for\",\n  \"looking to hire\",\n  \"need someone to\",\n  \"need a developer\",\n  \"seeking a\",\n  \"position available\",\n  \"job opening\",\n  \"vacancy\",\n  \"contract role\"\n];\n\n// ===============================\n// HELPERS\n// ===============================\n\nfunction hasAny(text, list) {\n  return list.some(w => text.includes(w));\n}\n\nfunction count(text, list) {\n  return list.reduce((n, w) => text.includes(w) ? n + 1 : n, 0);\n}\n\n// ===============================\n// ENGINE\n// ===============================\n\nconst results = [];\n\nfor (const item of $input.all()) {\n\n  const text = (\n    (item.json.text || \"\") +\n    \" \" +\n    (item.json.title || \"\")\n  ).toLowerCase();\n\n  // 1️⃣ HARD KILL — never jobs\n  if (hasAny(text, HARD_NEGATIVE_PATTERNS)) continue;\n\n  // 2️⃣ Reject freelancer self-promo\n  if (hasAny(text, NEGATIVE_KEYWORDS)) continue;\n\n  // 3️⃣ Must show employer intent\n  if (!hasAny(text, EMPLOYER_INTENT)) continue;\n\n  let score = 0;\n\n  // Employer intent is KING\n  score += count(text, EMPLOYER_INTENT) * 40;\n\n  // Payment evidence\n  score += count(text, MONEY_KEYWORDS) * 25;\n\n  // Skill relevance\n  score += count(text, SKILL_KEYWORDS) * 8;\n\n  // Length bonus (real job posts are detailed)\n  if (text.length > 400) score += 10;\n  if (text.length > 800) score += 10;\n\n  // 4️⃣ Classification\n  if (score < 25) continue; // noise\n\n  let action = \"notion\";\n  if (score >= 120) action = \"telegram\";\n\n  results.push({\n    json: {\n      subreddit: item.json.subreddit || \"\",\n      title: item.json.title || \"\",\n      link: item.json.link || \"\",\n      published: item.json.published || \"\",\n      job_score: score,\n      intent: \"job\",\n      action\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -768
+      ],
+      "id": "fae22af4-7c47-42e4-8a3a-dcc20940f2ed",
+      "name": "Engine"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "04949d01-c9fa-49f5-808d-ca612c07ede7",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "notion",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        720,
+        -752
+      ],
+      "id": "d4f4a1dd-133b-47f3-9af8-5da461790106",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\n// 🔑 Keywords\nconst HIRING_KEYWORDS = [\n  \"hiring\",\n  \"looking for\",\n  \"need a\",\n  \"need help\",\n  \"seeking\",\n  \"we are hiring\",\n  \"job\",\n  \"position\",\n  \"role\",\n  \"contract\",\n  \"freelancer needed\"\n];\n\nconst MONEY_KEYWORDS = [\n  \"$\",\n  \"usd\",\n  \"salary\",\n  \"budget\",\n  \"paid\",\n  \"payment\",\n  \"rate\",\n  \"/hr\",\n  \"per hour\"\n];\n\nconst SKILL_KEYWORDS = [\n  \"website\",\n  \"web app\",\n  \"landing page\",\n  \"saas\",\n  \"automation\",\n  \"ai\",\n  \"api\",\n  \"bot\",\n  \"scraping\",\n  \"n8n\",\n  \"nocode\",\n  \"dashboard\",\n  \"shopify\",\n  \"wordpress\",\n  \"react\",\n  \"backend\",\n  \"frontend\"\n];\n\nconst NEGATIVE_KEYWORDS = [\n  \"[for hire]\",\n  \"[available]\",\n  \"commission open\",\n  \"open for work\"\n];\n\n// Helpers\nfunction count(text, words) {\n  return words.reduce((n, w) => text.includes(w) ? n + 1 : n, 0);\n}\n\nfor (const item of $input.all()) {\n  const text = item.json.text || \"\";\n  let score = 0;\n\n  // 🚫 Remove self-promotion\n  if (count(text, NEGATIVE_KEYWORDS) > 0) continue;\n\n  // 🎯 Hiring intent\n  score += count(text, HIRING_KEYWORDS) * 30;\n\n  // 💰 Money signal\n  score += count(text, MONEY_KEYWORDS) * 20;\n\n  // 🛠 Skill relevance\n  score += count(text, SKILL_KEYWORDS) * 5;\n\n  // 🧠 Length bonus (real jobs are detailed)\n  if (text.length > 500) score += 10;\n  if (text.length > 1000) score += 10;\n\n  // 🏷 Intent label\n  let intent = \"noise\";\n  if (score >= 50) intent = \"job\";\n\n  // 🎬 Final routing\n  let action = \"ignore\";\n  if (score >= 80) action = \"telegram\";\n  else if (score >= 50) action = \"notion\";\n\n  if (intent === \"job\") {\n    results.push({\n      json: {\n        subreddit: item.json.subreddit,\n        title: item.json.title,\n        link: item.json.link,\n        published: item.json.published,\n        job_score: score,\n        action,\n        intent,\n        text: item.json.text\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -272
+      ],
+      "id": "a1fc3c8e-7444-4323-a6ba-d477e88047a1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Classify the following post.\n\ntext:\n{{$json.text}}\nlink:\n{{ $json.link }}\n",
+        "options": {
+          "systemMessage": "=You are a strict job post classifier.\n\nRules:\n- Decide if the post is a REAL PAID JOB OFFER from an employer.\n- Ignore freelancers advertising themselves.\n- Ignore guides, discussions, rants, or questions.\n- Ignore unpaid, vague, or speculative opportunities.\n\nOutput ONLY valid JSON.\n\nSchema:\n{\n  \"is_job\": boolean,\n  \"confidence\": number,\n  \"reason\": string ,\n  \"link\": {{ $json.link }} ,\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        192,
+        -608
+      ],
+      "id": "ff1f5d49-9bc9-45fb-a9ed-696e87d7de11",
+      "name": "AI Agent",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite-preview-09-2025",
+        "options": {
+          "maxOutputTokens": 120,
+          "temperature": 0,
+          "topK": 1,
+          "topP": 0.1,
+          "safetySettings": {
+            "values": [
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_NONE"
+              },
+              {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_NONE"
+              },
+              {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_NONE"
+              },
+              {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        944,
+        -736
+      ],
+      "id": "3fa3181a-4240-4d08-b1f4-58b8476f7382",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gmFasPWUwNxaQMpe",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "gpt-5"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        -432
+      ],
+      "id": "249b1249-ac5f-4c9d-880c-92da2945eeb5",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gbUxwAbunOyVCy8l",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2dea980e-6d2d-4ac7-94a0-ddbc0b995fde",
+              "leftValue": "={{ $json.is_job }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        -192
+      ],
+      "id": "9c53c42d-accc-4d5e-a079-5d6c9dde6dee",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst inputItems = $input.all();\n\n// Process and clean\nconst results = inputItems\n  .map((item, index) => {\n    try {\n      const parsed = JSON.parse(item.json.output);\n\n      return {\n        json: {\n          id: index + 1,\n          is_job: Boolean(parsed.is_job),\n          confidence: Number(parsed.confidence ?? 0),\n          reason: parsed.reason?.trim() || \"\",\n          link: parsed.link?.trim() || null\n        }\n      };\n    } catch (error) {\n      // Skip invalid AI outputs safely\n      return null;\n    }\n  })\n  .filter(Boolean);\n\n// IMPORTANT: return array of items\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        -608
+      ],
+      "id": "3deecdc6-9adf-488a-ba2a-930710304776",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1eZCRVthfapKdr9Dgz9hn3dMLNiIkH8ulDKZGU8Dvp8c/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "JobRadar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1eZCRVthfapKdr9Dgz9hn3dMLNiIkH8ulDKZGU8Dvp8c/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "link": "={{ $json.link }}",
+            "subreddit": "={{ $json.subreddit }}",
+            "title": "={{ $json.title }}",
+            "intent": "={{ $json.intent }}",
+            "action": "={{ $json.action }}",
+            "is_job": "={{ $json.is_job }}",
+            "job_score": "={{ $json.job_score }}",
+            "reason": "={{ $json.reason }}",
+            "published": "={{ $json.published }}"
+          },
+          "matchingColumns": [
+            "link"
+          ],
+          "schema": [
+            {
+              "id": "subreddit",
+              "displayName": "subreddit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "is_job",
+              "displayName": "is_job",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "job_score",
+              "displayName": "job_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "published",
+              "displayName": "published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        -384
+      ],
+      "id": "0baff649-eb1a-4cef-8a7b-560004ef5226",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "mesGdlqAKTSuoqjF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1eZCRVthfapKdr9Dgz9hn3dMLNiIkH8ulDKZGU8Dvp8c/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "JobRadar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1eZCRVthfapKdr9Dgz9hn3dMLNiIkH8ulDKZGU8Dvp8c/edit#gid=0"
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        -416
+      ],
+      "id": "5603622d-e03f-494e-9bb2-b9461f604e41",
+      "name": "Get row(s) in sheet",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "mesGdlqAKTSuoqjF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "link",
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        624,
+        -288
+      ],
+      "id": "5c0f4095-0ae9-49b4-814c-c32bf105e786",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "link",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        -592
+      ],
+      "id": "89ca1734-3e30-48b9-b1c6-97bc2b6e1601",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        864,
+        -1168
+      ],
+      "id": "eb9a5a23-e1ee-456d-8cd1-fc49b80414c1",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "QVoQyri1p1l5pK47",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Discover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discover": {
+      "main": [
+        [
+          {
+            "node": "Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scoring": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Subreddit Radar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confidence Engine": {
+      "main": [
+        [
+          {
+            "node": "Append and update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Confidence Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Subreddit Radar1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "keys": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subreddit Radar": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Subreddit Radar1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "CleanText",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CleanText": {
+      "main": [
+        [
+          {
+            "node": "parsing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parsing": {
+      "main": [
+        [
+          {
+            "node": "Engine",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Engine": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Africa/Tunis",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "1a15adc0-4360-425a-9e5a-edb9d753a939",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "487dd148d0d5db50bc71aed65004a3be633e094f2caba58e2dafce237ab73728"
+  },
+  "id": "1BnMQBiyPvwXx8bZ",
+  "tags": []
+}
