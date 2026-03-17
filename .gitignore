@@ -2,6 +2,8 @@
 node_modules/
 .env
 .env.local
+.env.local-ai
+.env.local-ai.example
 .env.development.local
 .env.test.local
 .env.production.local
@@ -16,3 +18,8 @@ PHASE_03_APP_FOUNDATION.md
 PHASE_04_HOMEPAGE.md
 PHASE_05_AUTH_ACCESS.md
 PROJECT_PLAN.md
+LOCAL_AI_WORKER.md
+LOCAL_LLM_SSH_TUNNEL_SETUP.md
+N8N_OPPORTUNITIES_BRANCH_REBUILD.md
+deploy/
+scripts/

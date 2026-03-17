@@ -3,6 +3,8 @@ import { getCurrentSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { accessRequests as previewAccessRequests } from "@/lib/mock-data";
 
+export const dynamic = "force-dynamic";
+
 async function getAccessPageData() {
   const db = getDb();
 

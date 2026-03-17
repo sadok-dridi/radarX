@@ -1,12 +1,17 @@
+import { getSourcesList } from "@/lib/data/opportunities";
+import { formatRelativeTime } from "@/lib/format";
 import { sources } from "@/lib/mock-data";
 
-export default function SourcesPage() {
+export default async function SourcesPage() {
+  const liveSources = await getSourcesList();
+  const items = liveSources ?? sources;
+
   return (
     <div className="panel p-6">
       <p className="section-kicker">Source management</p>
       <h1 className="mt-2 text-3xl tracking-[-0.05em] text-white">Sources</h1>
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {sources.map((source) => (
+        {items.map((source) => (
           <article key={source.id} className="rounded-[24px] border border-white/10 bg-slate-950/40 p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -18,7 +23,7 @@ export default function SourcesPage() {
               </div>
             </div>
             <div className="mt-5 text-sm text-slate-300">
-              <div className="flex items-center justify-between"><span>Last seen</span><span>{source.lastSeen}</span></div>
+              <div className="flex items-center justify-between"><span>Last seen</span><span>{formatRelativeTime(source.lastSeen)}</span></div>
               <div className="mt-2 flex items-center justify-between"><span>Last run</span><span>{source.lastRun}</span></div>
             </div>
           </article>
