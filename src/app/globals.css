@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 :root {
   color-scheme: dark;
 }
@@ -13,14 +23,14 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(89, 199, 255, 0.15), transparent 22%),
-    radial-gradient(circle at 85% 12%, rgba(242, 183, 96, 0.16), transparent 20%),
-    linear-gradient(180deg, #050d15 0%, #07111a 40%, #050c14 100%);
-  color: #eef7fb;
+    radial-gradient(circle at top left, rgba(147, 51, 234, 0.25), transparent 25%),
+    radial-gradient(circle at 85% 12%, rgba(56, 189, 248, 0.25), transparent 25%),
+    linear-gradient(180deg, #09041a 0%, #0d0728 40%, #09041a 100%);
+  color: #edf2fa;
 }
 
 ::selection {
-  background: rgba(89, 199, 255, 0.28);
+  background: rgba(147, 51, 234, 0.35);
   color: #ffffff;
 }
 
@@ -35,15 +45,19 @@ body {
 
 @layer components {
   .panel {
-    @apply rounded-[28px] border border-white/10 bg-white/5 shadow-glow backdrop-blur-xl;
+    @apply rounded-[28px] border border-accent-purple/20 bg-slate-950/50 shadow-glow backdrop-blur-xl transition-all duration-500 relative overflow-hidden;
+  }
+  
+  .panel:hover {
+    @apply border-accent-cyan/30 shadow-[0_0_30px_rgba(56,189,248,0.2)];
   }
 
   .panel-strong {
-    @apply rounded-[32px] border border-white/10 bg-slate-950/45 shadow-glow backdrop-blur-xl;
+    @apply rounded-[32px] border border-accent-blue/20 bg-slate-900/60 shadow-[0_0_40px_rgba(56,189,248,0.15)] backdrop-blur-xl transition-all duration-500;
   }
 
   .section-kicker {
-    @apply text-xs font-semibold uppercase tracking-[0.24em] text-accent-mint;
+    @apply text-xs font-semibold uppercase tracking-[0.24em] text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-mint;
   }
 
   .section-heading {

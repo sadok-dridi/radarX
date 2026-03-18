@@ -252,9 +252,12 @@ export async function getDashboardOverview(): Promise<DashboardOverview | null> 
   });
 }
 
-export async function getOpportunitiesList(): Promise<DashboardOpportunity[] | null> {
+export async function getOpportunitiesList(filters?: {
+  search?: string;
+  status?: string;
+}): Promise<DashboardOpportunity[] | null> {
   return withPool(async (db) => {
-    const result = await db.query<OpportunityRow>(`
+    let query = `
       SELECT
         o.id,
         o.title,
@@ -271,9 +274,26 @@ export async function getOpportunitiesList(): Promise<DashboardOpportunity[] | n
         o.canonical_url
       FROM opportunities o
       LEFT JOIN sources s ON s.id = o.source_id
-      ORDER BY o.last_seen_at DESC
-      LIMIT 100
-    `);
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (filters?.search) {
+      query += ` AND (o.title ILIKE $${paramIndex} OR o.content ILIKE $${paramIndex})`;
+      params.push(`%${filters.search}%`);
+      paramIndex++;
+    }
+
+    if (filters?.status && filters.status !== "all") {
+      query += ` AND o.status::text = $${paramIndex}`;
+      params.push(filters.status);
+      paramIndex++;
+    }
+
+    query += ` ORDER BY o.last_seen_at DESC LIMIT 100`;
+
+    const result = await db.query<OpportunityRow>(query, params);
 
     return result.rows.map((row: OpportunityRow) => mapOpportunity(row));
   });
@@ -295,6 +315,14 @@ export async function getOpportunityDetail(id: string): Promise<
         verdict: string | null;
         confidence: number | null;
         reason: string | null;
+        createdAt: string;
+      }>;
+      reviews: Array<{
+        id: string;
+        userName: string | null;
+        fromStatus: string;
+        toStatus: string;
+        note: string | null;
         createdAt: string;
       }>;
     }
@@ -352,6 +380,24 @@ export async function getOpportunityDetail(id: string): Promise<
       [id],
     );
 
+    const reviewsResult = await db.query(
+      `
+        SELECT
+          r.id,
+          r.from_status,
+          r.to_status,
+          r.note,
+          r.created_at,
+          u.display_name,
+          u.email
+        FROM reviews r
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.opportunity_id = $1
+        ORDER BY r.created_at DESC
+      `,
+      [id],
+    );
+
     return {
       opportunity: {
         ...mapOpportunity(row),
@@ -368,6 +414,14 @@ export async function getOpportunityDetail(id: string): Promise<
         verdict: item.verdict,
         confidence: item.confidence !== null ? Number(item.confidence) : null,
         reason: item.reason,
+        createdAt: item.created_at,
+      })),
+      reviews: reviewsResult.rows.map((item) => ({
+        id: item.id,
+        userName: item.display_name || item.email || "Unknown User",
+        fromStatus: item.from_status,
+        toStatus: item.to_status,
+        note: item.note,
         createdAt: item.created_at,
       })),
     };
@@ -398,6 +452,41 @@ export async function getSourcesList(): Promise<SourceCard[] | null> {
       confidence: Number(row.confidence || 0),
       lastSeen: row.last_seen_at,
       lastRun: row.last_successful_run_at ? "Success" : "No successful run yet",
+    }));
+  });
+}
+
+export async function getReviewsList() {
+  return withPool(async (db) => {
+    const result = await db.query(
+      `
+        SELECT
+          r.id,
+          r.from_status,
+          r.to_status,
+          r.note,
+          r.created_at,
+          u.display_name,
+          u.email,
+          o.title as opportunity_title,
+          o.id as opportunity_id
+        FROM reviews r
+        LEFT JOIN users u ON u.id = r.user_id
+        LEFT JOIN opportunities o ON o.id = r.opportunity_id
+        ORDER BY r.created_at DESC
+        LIMIT 50
+      `
+    );
+
+    return result.rows.map((item) => ({
+      id: item.id,
+      userName: item.display_name || item.email || "Unknown User",
+      fromStatus: item.from_status,
+      toStatus: item.to_status,
+      note: item.note,
+      createdAt: item.created_at,
+      opportunityTitle: item.opportunity_title,
+      opportunityId: item.opportunity_id,
     }));
   });
 }
