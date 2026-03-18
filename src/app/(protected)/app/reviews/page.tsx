@@ -67,7 +67,7 @@ export default async function ReviewsPage() {
               {review.note && (
                 <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/5 relative z-10">
                   <p className="text-sm leading-relaxed text-slate-300 relative z-10">
-                    "{review.note}"
+                    &quot;{review.note}&quot;
                   </p>
                 </div>
               )}
