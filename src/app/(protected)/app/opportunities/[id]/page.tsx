@@ -48,8 +48,25 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
               <div className="relative">
                 <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-accent-cyan to-transparent rounded-full" />
                 <div className="pl-6">
-                  <h2 className="text-xl font-display font-bold text-white mb-3">Why this lead matters</h2>
-                  <p className="text-sm sm:text-base leading-relaxed text-slate-300">{opportunity.summary}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+                    <h2 className="text-xl font-display font-bold text-white">Full Description</h2>
+                    {opportunity.canonicalUrl && (
+                      <a 
+                        href={opportunity.canonicalUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/20 border border-accent-cyan/20 transition-colors text-xs font-bold uppercase tracking-wider"
+                      >
+                        View Original Post
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    )}
+                  </div>
+                  <div className="text-sm sm:text-base leading-relaxed text-slate-300 max-h-[400px] overflow-y-auto pr-4 whitespace-pre-wrap scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20">
+                    {"content" in opportunity && opportunity.content ? opportunity.content : opportunity.summary}
+                  </div>
                 </div>
               </div>
 

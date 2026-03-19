@@ -307,6 +307,7 @@ export async function getOpportunityDetail(id: string): Promise<
         isJob: boolean | null;
         createdAt: string;
         updatedAt: string;
+        content: string | null;
       };
       classifications: Array<{
         id: string;
@@ -406,6 +407,7 @@ export async function getOpportunityDetail(id: string): Promise<
         isJob: row.is_job,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+        content: row.content,
       },
       classifications: classificationsResult.rows.map((item: ClassificationRow) => ({
         id: item.id,

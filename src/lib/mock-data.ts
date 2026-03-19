@@ -17,6 +17,7 @@ export const opportunities = [
     action: "telegram",
     publishedAt: "2 hours ago",
     location: "Remote / US-friendly",
+    canonicalUrl: "https://reddit.com/r/smallbusiness",
     summary:
       "Founder describes manual ops bottlenecks, spreadsheet-heavy reporting, and asks for automation help with a real budget signal.",
     reason:
@@ -33,6 +34,7 @@ export const opportunities = [
     action: "review",
     publishedAt: "5 hours ago",
     location: "EU",
+    canonicalUrl: "https://reddit.com/r/startups",
     summary:
       "Startup operator asks for a small client-facing portal with document uploads, notifications, and admin review flow.",
     reason:
@@ -49,6 +51,7 @@ export const opportunities = [
     action: "notion",
     publishedAt: "11 hours ago",
     location: "Middle East",
+    canonicalUrl: "https://reddit.com/r/Entrepreneur",
     summary:
       "Business owner describes a fragmented lead pipeline and wants automation between intake forms, CRM, and follow-up.",
     reason:
