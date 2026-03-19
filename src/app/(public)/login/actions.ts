@@ -1,32 +1,24 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import { verifyPassword } from "@/lib/auth/password";
 import { createUserSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
+import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
-type LoginActionState = {
+export type LoginActionState = {
   status: "idle" | "error";
   message?: string;
 };
 
-const loginSchema = z.object({
-  email: z.string().email().transform((value) => value.trim().toLowerCase()),
-  password: z.string().min(8),
-});
-
-export async function loginAction(_: LoginActionState, formData: FormData): Promise<LoginActionState> {
-  const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
+export async function loginAction(data: LoginInput): Promise<LoginActionState> {
+  const parsed = loginSchema.safeParse(data);
 
   if (!parsed.success) {
     return {
       status: "error",
-      message: "Enter a valid email and password.",
+      message: parsed.error.issues[0]?.message ?? "Enter a valid email and password.",
     };
   }
 

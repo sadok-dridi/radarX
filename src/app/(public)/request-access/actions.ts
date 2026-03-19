@@ -1,40 +1,19 @@
 "use server";
 
-import { z } from "zod";
-
 import { hashPassword } from "@/lib/auth/password";
 import { createUserSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
+import { requestAccessSchema, type RequestAccessInput } from "@/lib/validations/auth";
 
-type RequestAccessActionState = {
+export type RequestAccessActionState = {
   status: "idle" | "success" | "error";
   message?: string;
 };
 
-const requestAccessSchema = z
-  .object({
-    displayName: z.string().trim().min(2).max(80),
-    email: z.string().email().transform((value) => value.trim().toLowerCase()),
-    password: z.string().min(8).max(128),
-    confirmPassword: z.string().min(8).max(128),
-    message: z.string().trim().min(8).max(1000),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
-
 export async function requestAccessAction(
-  _: RequestAccessActionState,
-  formData: FormData,
+  data: RequestAccessInput,
 ): Promise<RequestAccessActionState> {
-  const parsed = requestAccessSchema.safeParse({
-    displayName: formData.get("displayName"),
-    email: formData.get("email"),
-    password: formData.get("password"),
-    confirmPassword: formData.get("confirmPassword"),
-    message: formData.get("message"),
-  });
+  const parsed = requestAccessSchema.safeParse(data);
 
   if (!parsed.success) {
     return {
@@ -52,7 +31,7 @@ export async function requestAccessAction(
     };
   }
 
-  const { displayName, email, password, message } = parsed.data;
+  const { displayName, email, password } = parsed.data;
   const passwordHash = await hashPassword(password);
   const bootstrapOwnerEmail = process.env.OWNER_BOOTSTRAP_EMAIL?.trim().toLowerCase();
 
@@ -108,7 +87,6 @@ export async function requestAccessAction(
           where: { id: pendingRequest.id },
           data: {
             displayName,
-            message,
             status: "approved",
             reviewedAt: new Date(),
             linkedUserId: user.id,
@@ -120,7 +98,6 @@ export async function requestAccessAction(
           data: {
             email,
             displayName,
-            message,
             status: "approved",
             reviewedAt: new Date(),
             linkedUserId: user.id,
@@ -140,7 +117,6 @@ export async function requestAccessAction(
         where: { id: pendingRequest.id },
         data: {
           displayName,
-          message,
           linkedUserId: user.id,
           reviewedAt: null,
           reviewerUserId: null,
@@ -152,7 +128,6 @@ export async function requestAccessAction(
         data: {
           email,
           displayName,
-          message,
           status: "pending",
           linkedUserId: user.id,
         },
