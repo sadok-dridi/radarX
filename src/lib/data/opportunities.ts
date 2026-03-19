@@ -255,8 +255,46 @@ export async function getDashboardOverview(): Promise<DashboardOverview | null> 
 export async function getOpportunitiesList(filters?: {
   search?: string;
   status?: string;
-}): Promise<DashboardOpportunity[] | null> {
+  sort?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{ items: DashboardOpportunity[]; totalCount: number; totalPages: number } | null> {
   return withPool(async (db) => {
+    let baseWhere = "WHERE 1=1";
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (filters?.search) {
+      baseWhere += ` AND (o.title ILIKE $${paramIndex} OR o.content ILIKE $${paramIndex})`;
+      params.push(`%${filters.search}%`);
+      paramIndex++;
+    }
+
+    if (filters?.status && filters.status !== "all") {
+      baseWhere += ` AND o.status::text = $${paramIndex}`;
+      params.push(filters.status);
+      paramIndex++;
+    }
+
+    // Get total count
+    const countResult = await db.query<{ count: string }>(
+      `SELECT COUNT(*) FROM opportunities o ${baseWhere}`,
+      params
+    );
+    const totalCount = parseInt(countResult.rows[0].count, 10);
+
+    const limit = filters?.limit || 12;
+    const page = filters?.page || 1;
+    const offset = (page - 1) * limit;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
+    let orderBy = "ORDER BY o.last_seen_at DESC NULLS LAST";
+    if (filters?.sort === "smart") {
+      orderBy = "ORDER BY o.score DESC NULLS LAST, o.confidence DESC NULLS LAST, o.last_seen_at DESC NULLS LAST";
+    } else if (filters?.sort === "confidence") {
+      orderBy = "ORDER BY o.confidence DESC NULLS LAST, o.score DESC NULLS LAST, o.last_seen_at DESC NULLS LAST";
+    }
+
     let query = `
       SELECT
         o.id,
@@ -274,28 +312,20 @@ export async function getOpportunitiesList(filters?: {
         o.canonical_url
       FROM opportunities o
       LEFT JOIN sources s ON s.id = o.source_id
-      WHERE 1=1
+      ${baseWhere}
+      ${orderBy}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
-    const params: any[] = [];
-    let paramIndex = 1;
 
-    if (filters?.search) {
-      query += ` AND (o.title ILIKE $${paramIndex} OR o.content ILIKE $${paramIndex})`;
-      params.push(`%${filters.search}%`);
-      paramIndex++;
-    }
+    const queryParams = [...params, limit, offset];
 
-    if (filters?.status && filters.status !== "all") {
-      query += ` AND o.status::text = $${paramIndex}`;
-      params.push(filters.status);
-      paramIndex++;
-    }
+    const result = await db.query<OpportunityRow>(query, queryParams);
 
-    query += ` ORDER BY o.last_seen_at DESC LIMIT 100`;
-
-    const result = await db.query<OpportunityRow>(query, params);
-
-    return result.rows.map((row: OpportunityRow) => mapOpportunity(row));
+    return {
+      items: result.rows.map((row: OpportunityRow) => mapOpportunity(row)),
+      totalCount,
+      totalPages,
+    };
   });
 }
 

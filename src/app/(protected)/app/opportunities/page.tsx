@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import { getOpportunitiesList } from "@/lib/data/opportunities";
 import { formatRelativeTime } from "@/lib/format";
-import { opportunities } from "@/lib/mock-data";
+import { opportunities as mockOpportunities } from "@/lib/mock-data";
 import { OpportunitiesFilters } from "./filters";
+import { Pagination } from "./pagination";
 
 export default async function OpportunitiesPage({
   searchParams,
@@ -13,9 +14,13 @@ export default async function OpportunitiesPage({
   const resolvedParams = await searchParams;
   const q = typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
   const status = typeof resolvedParams.status === "string" ? resolvedParams.status : undefined;
+  const sort = typeof resolvedParams.sort === "string" ? resolvedParams.sort : "newest";
+  const page = typeof resolvedParams.page === "string" ? parseInt(resolvedParams.page, 10) : 1;
 
-  const liveOpportunities = await getOpportunitiesList({ search: q, status });
-  const items = liveOpportunities ?? opportunities;
+  const liveOpportunities = await getOpportunitiesList({ search: q, status, sort, page, limit: 12 });
+  
+  const items = liveOpportunities?.items ?? mockOpportunities;
+  const totalPages = liveOpportunities?.totalPages ?? 1;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
@@ -105,6 +110,8 @@ export default async function OpportunitiesPage({
           </div>
         )}
       </div>
+
+      <Pagination totalPages={totalPages} currentPage={page} />
     </div>
   );
 }
