@@ -1,105 +1,123 @@
-# Opportunity Radar (radarX)
+<div align="center">
 
-**Opportunity Radar** is a private opportunity intelligence system built around self-hosted automation workflows (e.g., `n8n`). It discovers, scores, validates, and routes high-signal opportunities from online sources (starting with Reddit and expanding to other platforms), presenting them in a clean, owner-controlled dashboard.
+# 🎯 Opportunity Radar (radarX)
 
-This project is designed as a personal/private tool for finding and managing high-signal opportunities with minimal noise, while keeping all data securely behind an approval-based access system.
+**An advanced, AI-powered opportunity intelligence & routing platform.**
 
-## 🚀 Key Features
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
 
-*   **Private Operator Dashboard:** A protected area to review real opportunities, monitor source activity, and track workflow runs.
-*   **Public Landing Page:** A public-safe facade that explains the workflow without exposing any sensitive lead data.
-*   **Approval-Based Access:** Built-in user role management (`owner`, `member`, `pending`). Users must request access and be approved by an owner.
-*   **Opportunity Scoring & Validation:** Review opportunities with explainable scoring, helping you focus on the highest-value leads.
-*   **Source & Workflow Monitoring:** Keep track of source health and n8n workflow run statuses directly from the dashboard.
-*   **Local AI Integration:** Built-in scripts for running local AI controllers and workers to process and score data independently.
+</div>
 
-## 🛠 Tech Stack
+<br />
 
-*   **Framework:** [Next.js](https://nextjs.org/) (App Router)
-*   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-*   **Database:** PostgreSQL with [Prisma ORM](https://www.prisma.io/)
-*   **Authentication:** Custom JWT-based auth with `jose` & `bcryptjs`
-*   **Automation:** Integrates with `n8n` workflows
-*   **Language:** TypeScript
+## 🌟 Overview
 
-## 📂 Core Route Structure
+**Opportunity Radar** is a powerful intelligence system designed to discover, score, validate, and route high-signal opportunities from online platforms in real-time. By connecting directly to automated ingestion workflows (such as `n8n`), it cuts through the noise of the internet, allowing operators to focus exclusively on highly validated, actionable leads.
 
-*   `/` - Public landing page
-*   `/login` - Sign in
-*   `/request-access` - Account request page
-*   `/app` - Dashboard home (Protected)
-*   `/app/opportunities` - Opportunities list
-*   `/app/opportunities/[id]` - Opportunity detail view
-*   `/app/sources` - Sources and source health tracking
-*   `/app/runs` - Workflow run monitoring
-*   `/app/reviews` - Review queue
-*   `/app/settings` - Settings & user administration
-*   `/app/access` - Approve or reject pending users
+The platform offers a high-performance operator dashboard, integrated local AI processing capabilities, and comprehensive source-health monitoring.
 
-## 🏁 Getting Started
+---
+
+## ✨ Key Features
+
+- **🧠 Intelligent Scoring & Validation:** Leverages automated pipelines and integrated AI workers to provide explainable scoring, ensuring you only spend time on high-value opportunities.
+- **⚡ Advanced Automation Hooks:** Deeply integrates with event-driven architectures and workflow engines to continuously ingest data from multiple platforms.
+- **🛡️ Secure Access Management:** Robust role-based access control. Users must request access and be formally approved before entering the dashboard environment.
+- **📊 Operator Dashboard:** A sleek, dark-mode optimized interface to review opportunities, track workflow run statuses, and monitor the health of your data sources.
+- **🤖 Local AI Pipelines:** Built-in controllers and workers for local LLM execution, providing advanced AI intelligence right out of the box.
+
+---
+
+## 🛠️ Technology Stack
+
+<details>
+<summary><b>Click to view the full stack details</b></summary>
+<br/>
+
+- **Frontend:** [Next.js](https://nextjs.org/) (App Router), React 19, [Tailwind CSS](https://tailwindcss.com/)
+- **Backend:** Node.js, Next.js API Routes / Server Actions
+- **Database:** PostgreSQL managed via [Prisma ORM](https://www.prisma.io/)
+- **Authentication:** Custom stateless JWT auth utilizing `jose` and `bcryptjs`
+- **AI / Automation:** Local AI Worker scripts & `n8n` integration
+</details>
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
+- Node.js (v18+ recommended)
+- PostgreSQL Database
+- (Optional) n8n instance for data ingestion workflows
+- (Optional) Local LLM setup for AI scoring
 
-*   Node.js (v18+ recommended)
-*   PostgreSQL database
-*   (Optional) Local AI setup if using the local AI worker scripts
-*   (Optional) n8n instance for data ingestion
+### 1️⃣ Installation
 
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone <your-repo-url>
-   cd radarX
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables:**
-   Copy the example environment file and configure your database and auth secrets.
-   ```bash
-   cp .env.example .env
-   ```
-   *Make sure to update `DATABASE_URL`, `JWT_SECRET`, and any AI/n8n related keys in your `.env` file.*
-
-4. **Initialize the Database:**
-   Push the Prisma schema to your database and generate the Prisma client:
-   ```bash
-   npm run db:push
-   npm run db:generate
-   ```
-
-5. **Run the Development Server:**
-   ```bash
-   npm run dev
-   ```
-   The application will be available at `http://localhost:3000`.
-
-### Local AI Workers
-
-If you are utilizing the local AI processing pipeline, you can start the controller and worker using the provided npm scripts:
+Clone the repository and install the dependencies:
 
 ```bash
-# Start the AI controller
+git clone https://github.com/your-org/radarX.git
+cd radarX
+npm install
+```
+
+### 2️⃣ Environment Configuration
+
+Copy the example environment file and apply your variables:
+
+```bash
+cp .env.example .env
+```
+*Ensure you configure your `DATABASE_URL`, `JWT_SECRET`, and any required AI integrations.*
+
+### 3️⃣ Database Setup
+
+Initialize your database schema and generate the Prisma client:
+
+```bash
+npm run db:push
+npm run db:generate
+```
+
+### 4️⃣ Launch the Platform
+
+Start the development server:
+
+```bash
+npm run dev
+```
+Navigate to `http://localhost:3000` to view the landing page and request dashboard access.
+
+---
+
+## 🧠 Local AI Worker Setup
+
+For advanced processing, Opportunity Radar includes scripts to run AI controllers locally.
+
+```bash
+# Terminal 1: Start the AI Controller
 npm run controller:local-ai
 
-# Start the AI worker
+# Terminal 2: Start the AI Worker
 npm run worker:local-ai
 ```
-*(See `LOCAL_AI_WORKER.md` and `LOCAL_LLM_SSH_TUNNEL_SETUP.md` for more detailed AI setup instructions).*
 
-## 📖 Documentation
+---
 
-For more detailed information on the project's architecture and planning phases, refer to the included markdown files:
+## 📂 Architecture & Documentation
 
-*   `PROJECT_PLAN.md` - High-level overview and route structure
-*   `PHASE_01_PRODUCT_BLUEPRINT.md` - Product goals and definitions
-*   `PHASE_02_DATABASE_SCHEMA.md` - Database design
-*   `DEPLOYMENT_WORKFLOW.md` - Deployment strategies
+Deep dive into the architecture through our internal documentation:
+- 📄 `PROJECT_PLAN.md` - Core routing and structure
+- 📄 `PHASE_01_PRODUCT_BLUEPRINT.md` - Product strategy
+- 📄 `PHASE_02_DATABASE_SCHEMA.md` - Data models
+- 📄 `DEPLOYMENT_WORKFLOW.md` - CI/CD guidelines
 
-## 📄 License
+---
 
-This project is private and intended for personal use.
+<div align="center">
+  <i>Built with precision for high-signal intelligence.</i>
+</div>
