@@ -139,7 +139,7 @@ export function RequestAccessForm() {
         <button
           type="submit"
           disabled={isSubmitting || serverState.status === "success"}
-          className="rounded-full bg-white px-5 py-3 font-medium text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full sm:w-auto rounded-full bg-white px-5 py-3 font-medium text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? "Submitting..." : "Submit request"}
         </button>

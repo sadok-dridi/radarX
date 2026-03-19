@@ -1,247 +1,318 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  Radar,
+  Filter,
+  CheckCircle2,
+  Route,
+  Activity,
+  Database,
+  Shield,
+  Zap,
+  Lock,
+  ChevronRight,
+} from "lucide-react";
 
 const signalStages = [
   {
     name: "Discover",
-    body: "Weekly RSS discovery hunts for new high-value communities using curated intent and niche keywords.",
+    icon: <Radar className="h-6 w-6 text-accent-cyan" />,
+    body: "Continuous deep-web discovery hunts for high-value founder and developer communities based on intent keywords.",
   },
   {
     name: "Score",
-    body: "Rules scoring measures hiring intent, pain signals, build relevance, freshness, and quality before expensive checks.",
+    icon: <Filter className="h-6 w-6 text-accent-mint" />,
+    body: "Multi-layered scoring engine measures exact hiring intent, technical relevance, freshness, and post quality.",
   },
   {
     name: "Validate",
-    body: "AI classification only steps in after the first pass strips noise, self-promo, and weak speculative posts.",
+    icon: <CheckCircle2 className="h-6 w-6 text-accent-amber" />,
+    body: "Proprietary AI classification aggressively strips self-promo, noise, and speculative posts before human review.",
   },
   {
     name: "Route",
-    body: "Urgent matches move to alerts while the rest become structured records inside a private operator workspace.",
+    icon: <Route className="h-6 w-6 text-accent-blue" />,
+    body: "Urgent enterprise matches route instantly to alerts; the rest become structured records in your private hub.",
   },
 ];
 
 const systemLayers = [
   {
-    title: "Discovery radar",
-    body: "Finds candidate communities from keyword-driven Reddit searches, then keeps only the sources that continue producing signal.",
+    title: "Discovery Engine",
+    icon: <Activity className="h-5 w-5 text-slate-300" />,
+    body: "Dynamically identifies and tracks candidate communities, keeping only the sources that consistently produce real signal.",
   },
   {
-    title: "Monitoring radar",
-    body: "Revisits validated sources every three hours, cleans raw posts, and extracts the most actionable opportunities.",
+    title: "Monitoring Loop",
+    icon: <Zap className="h-5 w-5 text-slate-300" />,
+    body: "Revisits validated sources every three hours. Cleans raw streams and extracts high-confidence actionable opportunities.",
   },
   {
-    title: "Private review layer",
-    body: "Holds the real opportunities, score breakdowns, review actions, run history, and owner-managed access.",
+    title: "Private Command Center",
+    icon: <Shield className="h-5 w-5 text-slate-300" />,
+    body: "A secure, owner-controlled environment holding real opportunities, detailed AI scoring breakdowns, and run history.",
   },
 ];
 
 const stackItems = [
-  ["Automation core", "n8n on Docker", "Schedules, scraping, branching, AI classification, and routing live in the workflow engine you already run."],
-  ["Edge and delivery", "Nginx on Oracle VPS", "Handles the app entry point cleanly while keeping your self-hosted setup aligned with the rest of the stack."],
-  ["Storage path", "Postgres-first direction", "Google Sheets works for transition, but the product is being shaped around structured relational records."],
-  ["Alerting", "Telegram and review queue", "High-confidence results can trigger fast action without exposing the full opportunity stream publicly."],
-] as const;
+  { title: "Automation core", tech: "n8n Engine", body: "Schedules, branching, and routing live in a hardened workflow.", icon: <Activity className="h-5 w-5 text-accent-cyan" /> },
+  { title: "Edge delivery", tech: "Optimized Node", body: "Handles the protected entry point while keeping the self-hosted setup clean.", icon: <Zap className="h-5 w-5 text-accent-mint" /> },
+  { title: "Storage layer", tech: "PostgreSQL", body: "Built from day one around structured, relational enterprise records.", icon: <Database className="h-5 w-5 text-accent-blue" /> },
+  { title: "Rapid alerting", tech: "Encrypted Queues", body: "High-confidence leads bypass the dashboard for immediate action.", icon: <Radar className="h-5 w-5 text-accent-amber" /> },
+];
 
 const futureTracks = [
-  "More source adapters beyond Reddit",
-  "Cross-source deduplication by fingerprint",
-  "Source reputation and freshness weighting",
-  "Explainable score breakdown inside each lead",
-  "Owner-controlled access for trusted collaborators",
-  "A dense premium dashboard instead of a generic admin panel",
+  "Advanced source adapters beyond standard networks",
+  "Cross-platform identity deduplication via fingerprinting",
+  "Dynamic source reputation and decay weighting",
+  "Explainable, token-level AI score breakdowns per lead",
+  "Granular access controls for trusted external collaborators",
 ];
+
+// Animation Variants
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100 } },
+};
 
 export default function LandingPage() {
   return (
-    <div className="space-y-10 pb-8">
-      <section className="panel-strong relative overflow-hidden px-6 py-10 sm:px-8 sm:py-12 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:px-10 lg:py-14">
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[45%] bg-gradient-to-l from-accent-cyan/10 via-transparent to-transparent lg:block" />
-        <div className="relative">
-          <p className="section-kicker">Private opportunity intelligence</p>
-          <h1 className="mt-4 max-w-[12ch] text-5xl leading-none tracking-[-0.065em] text-white sm:text-6xl lg:text-7xl">
-            Turn scattered demand into a private qualified signal stream.
-          </h1>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-            Opportunity Radar is a self-hosted workflow and dashboard product for finding real opportunities faster.
-            It discovers promising sources, filters noisy posts, validates employer intent, and routes the best matches
-            into a private operator workspace built for action instead of browsing.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link href="/login" className="rounded-full bg-white px-5 py-3 font-medium text-slate-950 transition hover:bg-slate-100">
-              Login
+    <div className="relative space-y-24 pb-20">
+      
+      {/* 
+        HERO SECTION
+        This acts as the high-end entrance with moving grids, orbs, and centered text
+      */}
+      <section className="relative flex min-h-[60vh] sm:min-h-[85vh] flex-col items-center justify-center overflow-hidden px-4 pt-4 sm:pt-20 text-center">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 z-0 bg-radar-grid animate-pan-grid opacity-30" />
+        <div className="absolute left-1/4 top-1/4 z-0 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] animate-float-orb rounded-full bg-accent-cyan/20 blur-[90px] sm:blur-[120px]" />
+        <div className="absolute right-1/4 top-1/3 z-0 h-[200px] w-[200px] sm:h-[350px] sm:w-[350px] animate-float-orb-delayed rounded-full bg-accent-mint/20 blur-[80px] sm:blur-[100px]" />
+        
+        {/* Content */}
+        <motion.div 
+          className="relative z-10 mx-auto max-w-4xl"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div variants={fadeUp} className="mb-6 flex justify-center">
+            <span className="flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-medium uppercase tracking-widest text-accent-cyan backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-cyan opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-cyan"></span>
+              </span>
+              Lead Discovery Engine
+            </span>
+          </motion.div>
+
+          <motion.h1 variants={fadeUp} className="text-4xl leading-[1.15] font-bold tracking-tight text-white sm:text-7xl lg:text-8xl">
+            Stop searching for clients. Let us <span className="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-mint">find them for you.</span>
+          </motion.h1>
+
+          <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-2xl text-[15px] sm:text-lg leading-relaxed text-slate-300 sm:text-xl">
+            A self-hosted intelligence system built for operators. We discover closed communities, validate high-intent opportunities using AI, and route the most profitable matches to a private command center.
+          </motion.p>
+
+          <motion.div variants={fadeUp} className="mt-8 sm:mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row w-full sm:w-auto px-4 sm:px-0">
+            <Link 
+              href="/request-access" 
+              className="group relative flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 sm:py-4 text-[15px] sm:text-base font-semibold text-slate-950 transition-all hover:bg-slate-100 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]"
+            >
+              Request Access
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link href="/request-access" className="rounded-full border border-white/10 px-5 py-3 font-medium text-white transition hover:border-white/30 hover:bg-white/5">
-              Request access
+            <Link 
+              href="/login" 
+              className="group flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-slate-900/50 px-8 py-3.5 sm:py-4 text-[15px] sm:text-base font-medium text-white backdrop-blur-md transition-all hover:border-white/30 hover:bg-slate-800/50"
+            >
+              <Lock className="h-4 w-4 text-slate-400 group-hover:text-white transition-colors" />
+              Sign in to workspace
             </Link>
-          </div>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Cadence</p>
-              <p className="mt-3 text-3xl font-semibold text-white">3h</p>
-              <p className="mt-2 text-sm text-slate-400">Live monitoring loop for validated sources</p>
-            </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Routing</p>
-              <p className="mt-3 text-3xl font-semibold text-white">2+</p>
-              <p className="mt-2 text-sm text-slate-400">Telegram and structured review destinations</p>
-            </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Shape</p>
-              <p className="mt-3 text-3xl font-semibold text-white">Dual</p>
-              <p className="mt-2 text-sm text-slate-400">Public-safe story, private operator dashboard</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative mt-8 grid gap-4 lg:mt-0">
-          <div className="rounded-[32px] border border-white/10 bg-slate-950/55 p-5 shadow-glow">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Signal console</p>
-                <h2 className="mt-2 text-2xl tracking-[-0.05em] text-white">Workflow preview</h2>
-              </div>
-              <div className="rounded-full border border-accent-mint/20 bg-accent-mint/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-accent-mint">
-                private
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Source intake</p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-200">
-                  <span className="rounded-full border border-accent-cyan/20 bg-accent-cyan/10 px-3 py-2">Reddit RSS</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2">Founder communities</span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2">Job boards</span>
-                </div>
-              </div>
-
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Qualification engine</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3 text-sm text-slate-200">Keyword and intent scoring</div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3 text-sm text-slate-200">Confidence aging and source health</div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3 text-sm text-slate-200">AI job validation</div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3 text-sm text-slate-200">Action-aware routing</div>
-                </div>
-              </div>
-
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Destinations</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3">
-                    <p className="text-sm text-white">Telegram alerts</p>
-                    <p className="mt-1 text-xs text-slate-400">Fast response for top matches</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3">
-                    <p className="text-sm text-white">Review workspace</p>
-                    <p className="mt-1 text-xs text-slate-400">Human triage and history</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
-      <section id="workflow" className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="panel p-6 sm:p-8">
-          <p className="section-kicker">Workflow overview</p>
-          <h2 className="section-heading mt-4">One workflow, two radar loops, one private system.</h2>
-          <p className="copy-muted mt-5 max-w-xl">
-            The current implementation is already more than a scraper. It discovers strong communities, monitors them
-            repeatedly, classifies actual opportunity intent, and prepares everything for a more serious data-backed app.
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+      {/* 
+        BENTO BOX WORKFLOW
+      */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="mb-10 sm:mb-12 text-center"
+        >
+          <p className="section-kicker">The Pipeline</p>
+          <h2 className="section-heading mt-4">One workflow. Continuous extraction.</h2>
+        </motion.div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {signalStages.map((stage, index) => (
-            <article key={stage.name} className="panel p-6">
-              <div className="flex items-center justify-between gap-4">
-                <p className="section-kicker">Stage {index + 1}</p>
-                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-400">{stage.name}</span>
+            <motion.div
+              key={stage.name}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: index * 0.1 }}
+              className="group relative overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/5 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-md transition-all hover:border-accent-cyan/30 hover:bg-slate-900/60 hover:shadow-glow-blue"
+            >
+              <div className="mb-6 inline-flex rounded-2xl bg-white/5 p-3">
+                {stage.icon}
               </div>
-              <h3 className="mt-4 text-2xl tracking-[-0.04em] text-white">{stage.name}</h3>
-              <p className="copy-muted mt-4">{stage.body}</p>
-            </article>
+              <h3 className="text-xl font-medium text-white">{stage.name}</h3>
+              <p className="copy-muted mt-3">{stage.body}</p>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      <section id="system" className="panel-strong px-6 py-8 sm:px-8 sm:py-10">
-        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div>
-            <p className="section-kicker">System structure</p>
-            <h2 className="section-heading mt-4">Designed as a private operations surface, not a public feed.</h2>
-            <p className="copy-muted mt-5 max-w-xl">
-              The landing page exists to explain the machine. The protected app exists to work with real opportunities.
-              That boundary is part of the product design, not a temporary decision.
-            </p>
-          </div>
+      {/* 
+        SYSTEM STRUCTURE 
+      */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-8">
+        <div className="rounded-[32px] sm:rounded-[40px] border border-white/10 bg-slate-950/60 p-6 sm:p-12 lg:p-16 relative overflow-hidden shadow-glow">
+          {/* Subtle bg glow */}
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-accent-purple/20 blur-[80px]" />
+          
+          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <p className="section-kicker">Architecture</p>
+              <h2 className="section-heading mt-4">Built strictly for private operations.</h2>
+              <p className="copy-muted mt-5 text-lg">
+                The public interface exists solely to explain the engine. The protected layers are designed exclusively to isolate, analyze, and act on raw opportunity data without public exposure.
+              </p>
+            </motion.div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            {systemLayers.map((layer) => (
-              <article key={layer.title} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
-                <h3 className="text-xl text-white">{layer.title}</h3>
-                <p className="copy-muted mt-3">{layer.body}</p>
-              </article>
-            ))}
+            <div className="flex flex-col gap-4 relative z-10">
+              {systemLayers.map((layer, index) => (
+                <motion.div
+                  key={layer.title}
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.15 }}
+                  className="flex items-start gap-4 rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-sm transition-colors hover:border-white/15"
+                >
+                  <div className="mt-1 shrink-0 rounded-full bg-white/10 p-2">
+                    {layer.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-white">{layer.title}</h3>
+                    <p className="copy-muted mt-2">{layer.body}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="panel p-6 sm:p-8">
-          <p className="section-kicker">Infrastructure</p>
-          <h2 className="section-heading mt-4">Built around the stack you already run.</h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {stackItems.map(([eyebrow, title, body]) => (
-              <article key={title} className="rounded-[24px] border border-white/10 bg-slate-950/45 p-5">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{eyebrow}</p>
-                <h3 className="mt-3 text-xl text-white">{title}</h3>
-                <p className="copy-muted mt-3">{body}</p>
-              </article>
-            ))}
-          </div>
-        </div>
+      {/* 
+        INFRASTRUCTURE & ROADMAP 
+      */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-8">
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Tech Stack */}
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col rounded-[32px] sm:rounded-[40px] border border-white/5 bg-slate-900/30 p-6 sm:p-10"
+          >
+            <p className="section-kicker mb-6">Stack & Security</p>
+            <div className="grid gap-4 sm:grid-cols-2 flex-grow">
+              {stackItems.map((item) => (
+                <div key={item.tech} className="rounded-3xl bg-slate-950/50 p-5 border border-white/[0.02]">
+                  <div className="mb-4 inline-flex rounded-xl bg-white/5 p-2.5">
+                    {item.icon}
+                  </div>
+                  <h4 className="text-white font-medium">{item.title}</h4>
+                  <p className="text-xs uppercase tracking-wider text-accent-cyan mt-1 mb-3">{item.tech}</p>
+                  <p className="text-sm text-slate-400">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
-        <div id="roadmap" className="panel p-6 sm:p-8">
-          <p className="section-kicker">Roadmap</p>
-          <h2 className="section-heading mt-4">Built for the next layer, not just the current feed.</h2>
-          <p className="copy-muted mt-5">
-            The Reddit workflow is version one of the source engine. The real target is a normalized intelligence system
-            where new adapters can plug in without changing how the dashboard thinks.
-          </p>
-          <div className="mt-6 space-y-3">
-            {futureTracks.map((item) => (
-              <div key={item} className="flex items-start gap-3 rounded-[20px] border border-white/10 bg-slate-950/45 px-4 py-3 text-sm text-slate-200">
-                <span className="mt-1 h-2.5 w-2.5 flex-none rounded-full bg-accent-mint" />
-                <span>{item}</span>
+          {/* Roadmap */}
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="rounded-[32px] sm:rounded-[40px] border border-white/5 bg-slate-900/30 p-6 sm:p-10 relative overflow-hidden"
+          >
+            <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-accent-blue/10 blur-[80px]" />
+            <div className="relative z-10">
+              <p className="section-kicker">Evolution Track</p>
+              <h2 className="text-2xl font-semibold text-white mt-4 mb-8">What we are building next</h2>
+              <div className="space-y-4">
+                {futureTracks.map((item, i) => (
+                  <div key={i} className="group flex items-start gap-4 rounded-2xl bg-white/[0.02] border border-white/[0.02] p-4 transition-colors hover:bg-white/[0.04]">
+                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent-mint/30 bg-accent-mint/10 text-accent-mint group-hover:bg-accent-mint group-hover:text-slate-950 transition-colors">
+                      <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                    </div>
+                    <span className="text-sm text-slate-300">{item}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      <section className="panel-strong overflow-hidden px-6 py-8 sm:px-8 sm:py-10">
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-          <div>
-            <p className="section-kicker">Access model</p>
-            <h2 className="section-heading mt-4">Open homepage. Closed intelligence layer.</h2>
-            <p className="copy-muted mt-5 max-w-2xl">
-              The experience stays visible, but the opportunities stay private. Approved users can log in, review leads,
-              inspect scoring, and monitor runs. Everyone else only sees the system story and request path.
+      {/* 
+        FINAL CTA 
+      */}
+      <section className="mx-auto max-w-5xl px-4 sm:px-8 pt-10">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative overflow-hidden rounded-[32px] sm:rounded-[40px] border border-accent-cyan/20 bg-slate-950 p-8 text-center shadow-[0_0_60px_rgba(56,189,248,0.15)] sm:p-16"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-accent-cyan/10 to-transparent opacity-50" />
+          <div className="relative z-10">
+            <Lock className="mx-auto h-12 w-12 text-accent-cyan mb-6" />
+            <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              Closed intelligence.
+            </h2>
+            <p className="mx-auto mt-6 max-w-xl text-lg text-slate-400">
+              Access is strictly owner-approved. Request a secure account to review leads, inspect AI scoring, and act on live signals.
             </p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link 
+                href="/request-access" 
+                className="relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full p-[1px]"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-accent-cyan via-accent-mint to-accent-blue animate-spin-slow" />
+                <span className="relative flex items-center gap-2 rounded-full bg-slate-950 px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-slate-900">
+                  Request Private Access
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              </Link>
+            </div>
           </div>
-
-          <div className="flex flex-wrap gap-4 lg:justify-end">
-            <Link href="/login" className="rounded-full bg-white px-5 py-3 font-medium text-slate-950 transition hover:bg-slate-100">
-              Enter workspace
-            </Link>
-            <Link href="/request-access" className="rounded-full border border-white/10 px-5 py-3 font-medium text-white transition hover:border-white/30 hover:bg-white/5">
-              Request access
-            </Link>
-          </div>
-        </div>
+        </motion.div>
       </section>
+
     </div>
   );
 }

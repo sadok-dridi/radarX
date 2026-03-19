@@ -12,8 +12,8 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-xl items-center">
-      <div className="panel w-full p-8">
+    <div className="mx-auto flex min-h-[70vh] max-w-xl items-center pt-8 sm:pt-0">
+      <div className="panel w-full p-6 sm:p-8">
         <p className="section-kicker">Private access</p>
         <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white">Login</h1>
         <p className="mt-4 text-sm leading-7 text-slate-300">

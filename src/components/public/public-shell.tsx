@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-import { publicNavigation } from "@/lib/navigation";
-
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -9,23 +7,21 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       <div className="pointer-events-none absolute right-[-8rem] top-[10rem] h-[22rem] w-[22rem] rounded-full bg-accent-amber/15 blur-3xl" />
       <div className="pointer-events-none absolute bottom-[-8rem] left-1/2 h-[20rem] w-[28rem] -translate-x-1/2 rounded-full bg-accent-mint/10 blur-3xl" />
       <div className="pointer-events-none absolute inset-0 bg-radar-grid bg-[size:82px_82px] opacity-[0.05]" />
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 pb-12 pt-6 sm:px-8 lg:px-10">
-        <header className="sticky top-4 z-20 mb-8 rounded-full border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/" className="flex items-center gap-3 text-sm font-semibold tracking-[0.24em] text-slate-100 uppercase">
-              <span className="h-3 w-3 rounded-full bg-gradient-to-br from-accent-amber to-accent-cyan shadow-[0_0_24px_rgba(89,199,255,0.7)]" />
-              Opportunity Radar
+      
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-12 pt-4 sm:px-8 lg:px-10">
+        <header className="sticky top-4 z-50 mb-8 mx-auto w-full max-w-2xl rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-2xl shadow-glow-blue">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold tracking-[0.2em] text-slate-100 uppercase transition-opacity hover:opacity-80">
+              <span className="h-2 w-2 sm:h-3 sm:w-3 shrink-0 rounded-full bg-gradient-to-br from-accent-amber to-accent-cyan shadow-[0_0_20px_rgba(56,189,248,0.8)]" />
+              <span className="hidden sm:inline">Opportunity Radar</span>
+              <span className="sm:hidden">Radar</span>
             </Link>
-            <nav className="flex flex-wrap items-center gap-4 text-sm text-slate-300">
-              {publicNavigation.map((item) => (
-                <Link key={item.href} href={item.href} className="transition hover:text-white">
-                  {item.label}
-                </Link>
-              ))}
-              <Link href="/request-access" className="transition hover:text-white">
-                Access
+            
+            <nav className="flex items-center gap-4 text-xs sm:text-sm">
+              <Link href="/request-access" className="font-medium text-slate-300 transition hover:text-white">
+                Request Access
               </Link>
-              <Link href="/login" className="rounded-full border border-white/10 px-4 py-2 text-white transition hover:border-white/30 hover:bg-white/5">
+              <Link href="/login" className="rounded-full bg-white px-4 py-1.5 font-medium text-slate-950 transition hover:bg-slate-200">
                 Login
               </Link>
             </nav>
@@ -34,10 +30,10 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1">{children}</main>
 
-        <footer className="mt-16 border-t border-white/10 pt-6 text-sm text-slate-400">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p>Private opportunity intelligence, designed for high-signal workflow review.</p>
-            <div className="flex items-center gap-4">
+        <footer className="mt-16 border-t border-white/10 pt-8 pb-6 text-sm text-slate-400">
+          <div className="flex flex-col gap-4 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+            <p className="max-w-md mx-auto sm:mx-0">Private opportunity intelligence, designed for high-signal workflow review.</p>
+            <div className="flex items-center justify-center gap-4">
               <Link href="/login" className="transition hover:text-white">
                 Login
               </Link>

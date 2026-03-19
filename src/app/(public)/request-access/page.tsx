@@ -11,8 +11,8 @@ export default async function RequestAccessPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-2xl items-center">
-      <div className="panel w-full p-8">
+    <div className="mx-auto flex min-h-[70vh] max-w-2xl items-center pt-8 sm:pt-0">
+      <div className="panel w-full p-6 sm:p-8">
         <p className="section-kicker">Invite-only flow</p>
         <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white">Request access</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">

@@ -10,6 +10,36 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .animate-pan-grid {
+    animation: pan-grid 60s linear infinite;
+  }
+  
+  .animate-float-orb {
+    animation: float-orb 10s ease-in-out infinite;
+  }
+  
+  .animate-float-orb-delayed {
+    animation: float-orb 12s ease-in-out infinite 2s;
+  }
+}
+
+@keyframes pan-grid {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}
+
+@keyframes float-orb {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-40px) scale(1.05);
+  }
 }
 
 :root {
