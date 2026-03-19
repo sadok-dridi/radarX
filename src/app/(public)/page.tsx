@@ -84,7 +84,7 @@ const staggerContainer = {
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100 } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
 export default function LandingPage() {
@@ -97,9 +97,10 @@ export default function LandingPage() {
       */}
       <section className="relative flex min-h-[60vh] sm:min-h-[85vh] flex-col items-center justify-center overflow-hidden px-4 pt-4 sm:pt-20 text-center">
         {/* Animated Background Elements */}
-        <div className="absolute inset-0 z-0 bg-radar-grid animate-pan-grid opacity-30" />
-        <div className="absolute left-1/4 top-1/4 z-0 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] animate-float-orb rounded-full bg-accent-cyan/20 blur-[90px] sm:blur-[120px]" />
-        <div className="absolute right-1/4 top-1/3 z-0 h-[200px] w-[200px] sm:h-[350px] sm:w-[350px] animate-float-orb-delayed rounded-full bg-accent-mint/20 blur-[80px] sm:blur-[100px]" />
+        <div className="absolute inset-0 z-0 bg-radar-grid animate-pan-grid opacity-20 pointer-events-none" />
+        {/* On mobile, we use lower blur values and transform-gpu to prevent frame drops */}
+        <div className="absolute left-1/4 top-1/4 z-0 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] animate-float-orb rounded-full bg-accent-cyan/15 blur-[60px] sm:blur-[120px] transform-gpu pointer-events-none" />
+        <div className="absolute right-1/4 top-1/3 z-0 h-[200px] w-[200px] sm:h-[350px] sm:w-[350px] animate-float-orb-delayed rounded-full bg-accent-mint/15 blur-[50px] sm:blur-[100px] transform-gpu pointer-events-none" />
         
         {/* Content */}
         <motion.div 
@@ -152,7 +153,8 @@ export default function LandingPage() {
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="mb-10 sm:mb-12 text-center"
         >
           <p className="section-kicker">The Pipeline</p>
@@ -165,9 +167,9 @@ export default function LandingPage() {
               key={stage.name}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: index * 0.1 }}
-              className="group relative overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/5 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-md transition-all hover:border-accent-cyan/30 hover:bg-slate-900/60 hover:shadow-glow-blue"
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+              className="group relative overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/5 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-cyan/30 hover:bg-slate-900/60 hover:shadow-glow-blue transform-gpu"
             >
               <div className="mb-6 inline-flex rounded-2xl bg-white/5 p-3">
                 {stage.icon}
@@ -183,15 +185,16 @@ export default function LandingPage() {
         SYSTEM STRUCTURE 
       */}
       <section className="mx-auto max-w-7xl px-4 sm:px-8">
-        <div className="rounded-[32px] sm:rounded-[40px] border border-white/10 bg-slate-950/60 p-6 sm:p-12 lg:p-16 relative overflow-hidden shadow-glow">
-          {/* Subtle bg glow */}
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-accent-purple/20 blur-[80px]" />
+        <div className="rounded-[32px] sm:rounded-[40px] border border-white/10 bg-slate-950/60 p-6 sm:p-12 lg:p-16 relative overflow-hidden shadow-glow-blue sm:shadow-glow">
+          {/* Subtle bg glow - removed on extreme small screens for perf */}
+          <div className="hidden sm:block absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-accent-purple/20 blur-[80px] transform-gpu pointer-events-none" />
           
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <p className="section-kicker">Architecture</p>
               <h2 className="section-heading mt-4">Built strictly for private operations.</h2>
@@ -206,8 +209,8 @@ export default function LandingPage() {
                   key={layer.title}
                   initial={{ opacity: 0, x: 30 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.15 }}
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
                   className="flex items-start gap-4 rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-sm transition-colors hover:border-white/15"
                 >
                   <div className="mt-1 shrink-0 rounded-full bg-white/10 p-2">
@@ -233,7 +236,8 @@ export default function LandingPage() {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="flex flex-col rounded-[32px] sm:rounded-[40px] border border-white/5 bg-slate-900/30 p-6 sm:p-10"
           >
             <p className="section-kicker mb-6">Stack & Security</p>
@@ -255,11 +259,11 @@ export default function LandingPage() {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
             className="rounded-[32px] sm:rounded-[40px] border border-white/5 bg-slate-900/30 p-6 sm:p-10 relative overflow-hidden"
           >
-            <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-accent-blue/10 blur-[80px]" />
+            <div className="hidden sm:block absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-accent-blue/10 blur-[80px] transform-gpu pointer-events-none" />
             <div className="relative z-10">
               <p className="section-kicker">Evolution Track</p>
               <h2 className="text-2xl font-semibold text-white mt-4 mb-8">What we are building next</h2>
@@ -285,7 +289,8 @@ export default function LandingPage() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
           className="relative overflow-hidden rounded-[32px] sm:rounded-[40px] border border-accent-cyan/20 bg-slate-950 p-8 text-center shadow-[0_0_60px_rgba(56,189,248,0.15)] sm:p-16"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-accent-cyan/10 to-transparent opacity-50" />

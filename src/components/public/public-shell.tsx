@@ -2,11 +2,14 @@ import Link from "next/link";
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute left-[-10rem] top-[-8rem] h-[24rem] w-[24rem] rounded-full bg-accent-cyan/15 blur-3xl" />
-      <div className="pointer-events-none absolute right-[-8rem] top-[10rem] h-[22rem] w-[22rem] rounded-full bg-accent-amber/15 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-[-8rem] left-1/2 h-[20rem] w-[28rem] -translate-x-1/2 rounded-full bg-accent-mint/10 blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 bg-radar-grid bg-[size:82px_82px] opacity-[0.05]" />
+    <div className="relative min-h-screen overflow-hidden bg-[#09041a]">
+      {/* Mobile-optimized backdrops - lower blur on small screens */}
+      <div className="pointer-events-none absolute left-[-10rem] top-[-8rem] h-[24rem] w-[24rem] rounded-full bg-accent-cyan/15 blur-[80px] sm:blur-3xl transform-gpu" />
+      <div className="pointer-events-none absolute right-[-8rem] top-[10rem] h-[22rem] w-[22rem] rounded-full bg-accent-amber/15 blur-[80px] sm:blur-3xl transform-gpu" />
+      <div className="pointer-events-none absolute bottom-[-8rem] left-1/2 h-[20rem] w-[28rem] -translate-x-1/2 rounded-full bg-accent-mint/10 blur-[80px] sm:blur-3xl transform-gpu" />
+      
+      {/* Grid optimized for performance - simple static bg */}
+      <div className="pointer-events-none absolute inset-0 bg-radar-grid bg-[size:82px_82px] opacity-[0.03]" />
       
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-12 pt-4 sm:px-8 lg:px-10">
         <header className="sticky top-4 z-50 mb-8 mx-auto w-full max-w-2xl rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-3 sm:px-6 sm:py-4 backdrop-blur-2xl shadow-glow-blue">

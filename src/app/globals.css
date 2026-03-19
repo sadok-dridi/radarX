@@ -35,10 +35,12 @@
 
 @keyframes float-orb {
   0%, 100% {
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
+    will-change: transform;
   }
   50% {
-    transform: translateY(-40px) scale(1.05);
+    transform: translate3d(0, -20px, 0) scale(1.02);
+    will-change: transform;
   }
 }
 
