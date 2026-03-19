@@ -53,16 +53,6 @@ The platform offers a high-performance operator dashboard, integrated local AI p
 
 ---
 
-## 📂 Architecture & Documentation
-
-Deep dive into the architecture through our internal documentation:
-- 📄 `PROJECT_PLAN.md` - Core routing and structure
-- 📄 `PHASE_01_PRODUCT_BLUEPRINT.md` - Product strategy
-- 📄 `PHASE_02_DATABASE_SCHEMA.md` - Data models
-- 📄 `DEPLOYMENT_WORKFLOW.md` - CI/CD guidelines
-
----
-
 <div align="center">
   <i>Built with precision for high-signal intelligence.</i>
 </div>
