@@ -120,7 +120,7 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.h1 variants={fadeUp} className="text-4xl leading-[1.15] font-bold tracking-tight text-white sm:text-7xl lg:text-8xl">
-            Stop searching for clients. Let us <span className="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-mint">find them for you.</span>
+            Stop searching for clients. Let us <span className="whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-mint">find them for you.</span>
           </motion.h1>
 
           <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-2xl text-[15px] sm:text-lg leading-relaxed text-slate-300 sm:text-xl">
@@ -137,7 +137,7 @@ export default function LandingPage() {
             </Link>
             <Link 
               href="/login" 
-              className="group flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-slate-900/50 px-8 py-3.5 sm:py-4 text-[15px] sm:text-base font-medium text-white backdrop-blur-md transition-all hover:border-white/30 hover:bg-slate-800/50"
+              className="group flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-8 py-3.5 sm:py-4 text-[15px] sm:text-base font-medium text-white backdrop-blur-md transition-all hover:border-white/30 hover:bg-slate-800/50"
             >
               <Lock className="h-4 w-4 text-slate-400 group-hover:text-white transition-colors" />
               Sign in to workspace
@@ -169,9 +169,9 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.1 }}
               transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
-              className="group relative overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/5 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-cyan/30 hover:bg-slate-900/60 hover:shadow-glow-blue transform-gpu"
+              className="group relative overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/5 bg-white/[0.03] p-6 sm:p-8 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-cyan/30 hover:bg-white/[0.05] hover:shadow-glow-blue transform-gpu"
             >
-              <div className="mb-6 inline-flex rounded-2xl bg-white/5 p-3">
+              <div className="mb-6 inline-flex rounded-2xl bg-white/[0.03] p-3">
                 {stage.icon}
               </div>
               <h3 className="text-xl font-medium text-white">{stage.name}</h3>
@@ -187,7 +187,7 @@ export default function LandingPage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-8">
         <div className="rounded-[32px] sm:rounded-[40px] border border-white/10 bg-slate-950/60 p-6 sm:p-12 lg:p-16 relative overflow-hidden shadow-glow-blue sm:shadow-glow">
           {/* Subtle bg glow - removed on extreme small screens for perf */}
-          <div className="hidden sm:block absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-accent-purple/20 blur-[80px] transform-gpu pointer-events-none" />
+          <div className="hidden sm:block absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-accent-cyan/10 blur-[80px] transform-gpu pointer-events-none" />
           
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
             <motion.div
@@ -211,9 +211,9 @@ export default function LandingPage() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0.1 }}
                   transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
-                  className="flex items-start gap-4 rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-sm transition-colors hover:border-white/15"
+                  className="flex items-start gap-4 rounded-3xl border border-white/5 bg-white/[0.03] p-6 backdrop-blur-sm transition-colors hover:border-white/15"
                 >
-                  <div className="mt-1 shrink-0 rounded-full bg-white/10 p-2">
+                  <div className="mt-1 shrink-0 rounded-full bg-white/[0.05] p-2">
                     {layer.icon}
                   </div>
                   <div>
@@ -244,7 +244,7 @@ export default function LandingPage() {
             <div className="grid gap-4 sm:grid-cols-2 flex-grow">
               {stackItems.map((item) => (
                 <div key={item.tech} className="rounded-3xl bg-slate-950/50 p-5 border border-white/[0.02]">
-                  <div className="mb-4 inline-flex rounded-xl bg-white/5 p-2.5">
+                  <div className="mb-4 inline-flex rounded-xl bg-white/[0.03] p-2.5">
                     {item.icon}
                   </div>
                   <h4 className="text-white font-medium">{item.title}</h4>
@@ -269,7 +269,7 @@ export default function LandingPage() {
               <h2 className="text-2xl font-semibold text-white mt-4 mb-8">What we are building next</h2>
               <div className="space-y-4">
                 {futureTracks.map((item, i) => (
-                  <div key={i} className="group flex items-start gap-4 rounded-2xl bg-white/[0.02] border border-white/[0.02] p-4 transition-colors hover:bg-white/[0.04]">
+                  <div key={i} className="group flex items-start gap-4 rounded-2xl bg-white/[0.03] border border-white/[0.02] p-4 transition-colors hover:bg-white/[0.05]">
                     <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent-mint/30 bg-accent-mint/10 text-accent-mint group-hover:bg-accent-mint group-hover:text-slate-950 transition-colors">
                       <div className="h-1.5 w-1.5 rounded-full bg-current" />
                     </div>

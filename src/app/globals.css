@@ -77,15 +77,15 @@ body {
 
 @layer components {
   .panel {
-    @apply rounded-[28px] border border-accent-purple/20 bg-slate-950/50 shadow-glow backdrop-blur-xl transition-all duration-500 relative overflow-hidden;
+    @apply rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-2xl transition-all duration-300 relative overflow-hidden;
   }
   
   .panel:hover {
-    @apply border-accent-cyan/30 shadow-[0_0_30px_rgba(56,189,248,0.2)];
+    @apply border-white/10 bg-white/[0.05] shadow-[0_0_30px_rgba(56,189,248,0.1)];
   }
 
   .panel-strong {
-    @apply rounded-[32px] border border-accent-blue/20 bg-slate-900/60 shadow-[0_0_40px_rgba(56,189,248,0.15)] backdrop-blur-xl transition-all duration-500;
+    @apply rounded-[32px] border border-white/10 bg-white/[0.05] shadow-[0_0_40px_rgba(56,189,248,0.1)] backdrop-blur-2xl transition-all duration-300;
   }
 
   .section-kicker {

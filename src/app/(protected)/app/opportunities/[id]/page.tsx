@@ -26,11 +26,11 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
       </Link>
 
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <section className="rounded-[32px] border border-accent-purple/20 bg-slate-950/60 p-6 sm:p-10 shadow-glow backdrop-blur-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-purple/5 blur-[100px] rounded-full pointer-events-none" />
+        <section className="rounded-[32px] border border-white/10 bg-white/[0.05] p-6 sm:p-10 shadow-[0_0_30px_rgba(0,0,0,0.2)] backdrop-blur-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-cyan/5 blur-[100px] rounded-full pointer-events-none" />
           
           <div className="relative z-10">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent-cyan bg-clip-text text-transparent bg-gradient-to-r from-accent-cyan to-accent-mint mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 mb-3">
               Opportunity Detail
             </p>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight text-white leading-tight drop-shadow-md">
@@ -38,10 +38,10 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
             </h1>
             
             <div className="mt-6 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm font-medium text-slate-400">
-              <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white">{opportunity.source}</span>
-              <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">{opportunity.platform}</span>
-              <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">{opportunity.location || "Unknown location"}</span>
-              <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-accent-cyan">{formatRelativeTime(opportunity.publishedAt)}</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-white">{opportunity.source}</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10">{opportunity.platform}</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10">{opportunity.location || "Unknown location"}</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-accent-cyan">{formatRelativeTime(opportunity.publishedAt)}</span>
             </div>
 
             <div className="mt-10 space-y-8">
@@ -54,7 +54,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
               </div>
 
               <div className="relative">
-                <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-accent-purple to-transparent rounded-full" />
+                <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-accent-mint to-transparent rounded-full" />
                 <div className="pl-6">
                   <h2 className="text-xl font-display font-bold text-white mb-3">AI Reasoning</h2>
                   <p className="text-sm sm:text-base leading-relaxed text-slate-300">{opportunity.reason || "No AI reasoning stored yet."}</p>
@@ -67,10 +67,10 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                 <h2 className="text-xl font-display font-bold text-white mb-6">Classification History</h2>
                 <div className="space-y-4">
                   {liveDetail.classifications.map((classification) => (
-                    <article key={classification.id} className="rounded-2xl border border-accent-purple/20 bg-slate-900/40 p-5 hover:border-accent-purple/40 transition-colors">
+                    <article key={classification.id} className="rounded-2xl border border-white/5 bg-white/[0.03] p-5 hover:border-white/10 transition-colors">
                       <div className="flex flex-wrap items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
-                        <span className="px-2 py-1 bg-white/5 rounded">{classification.provider || "provider unknown"}</span>
-                        <span className="px-2 py-1 bg-white/5 rounded">{classification.modelName || "model unknown"}</span>
+                        <span className="px-2 py-1 bg-white/[0.03] rounded">{classification.provider || "provider unknown"}</span>
+                        <span className="px-2 py-1 bg-white/[0.03] rounded">{classification.modelName || "model unknown"}</span>
                         <span className="px-2 py-1 bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20 rounded">{classification.verdict || "no verdict"}</span>
                         <span className="px-2 py-1 bg-accent-mint/10 text-accent-mint border border-accent-mint/20 rounded">{classification.confidence ?? 0}% confidence</span>
                       </div>
@@ -85,10 +85,10 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
         </section>
 
         <aside className="space-y-6 flex flex-col">
-          <section className="rounded-[32px] border border-accent-blue/20 bg-slate-950/60 p-6 sm:p-8 shadow-[0_0_30px_rgba(56,189,248,0.05)] backdrop-blur-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent-blue mb-6">Signal Profile</p>
+          <section className="rounded-[32px] border border-white/10 bg-white/[0.05] p-6 sm:p-8 backdrop-blur-2xl">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 mb-6">Signal Profile</p>
             <div className="space-y-4 text-sm">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5">
                 <span className="text-slate-400 font-medium">Score</span>
                 <strong className="text-xl font-display text-white">{opportunity.score}</strong>
               </div>
@@ -96,16 +96,16 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                 <span className="text-accent-cyan font-medium">Confidence</span>
                 <strong className="text-xl font-display text-accent-cyan">{opportunity.confidence}%</strong>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5">
                 <span className="text-slate-400 font-medium">Status</span>
                 <strong className="uppercase tracking-wider text-[10px] px-2 py-1 bg-slate-800 rounded text-white">{opportunity.status}</strong>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5">
                 <span className="text-slate-400 font-medium">Routing</span>
                 <strong className="text-white">{opportunity.action}</strong>
               </div>
               {"authorName" in opportunity ? (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5">
                   <span className="text-slate-400 font-medium">Author</span>
                   <strong className="text-white truncate max-w-[150px]">{opportunity.authorName || "Unknown"}</strong>
                 </div>
@@ -113,8 +113,8 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
             </div>
           </section>
 
-          <section className="rounded-[32px] border border-accent-purple/20 bg-slate-950/60 p-6 sm:p-8 backdrop-blur-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-accent-purple mb-6">Timeline</p>
+          <section className="rounded-[32px] border border-white/10 bg-white/[0.05] p-6 sm:p-8 backdrop-blur-2xl">
+            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 mb-6">Timeline</p>
             <div className="relative border-l border-white/10 ml-3 space-y-6 pb-2">
               <div className="relative pl-6">
                 <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-accent-cyan shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
@@ -130,7 +130,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
               ) : null}
               {"updatedAt" in opportunity ? (
                 <div className="relative pl-6">
-                  <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-white/20" />
+                  <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-white/[0.05]" />
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Last Updated</p>
                   <p className="text-sm font-medium text-slate-300">{formatDateTime(opportunity.updatedAt)}</p>
                 </div>
@@ -146,10 +146,10 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
             <div className="mt-8 space-y-4">
               <h3 className="text-lg font-display font-bold text-white mb-6">Audit Log</h3>
               {liveDetail.reviews.map((review) => (
-                <article key={review.id} className="relative overflow-hidden rounded-[24px] border border-white/5 bg-slate-900/40 p-5 sm:p-6 transition-colors hover:bg-slate-900/60">
+                <article key={review.id} className="relative overflow-hidden rounded-[24px] border border-white/5 bg-white/[0.03] p-5 sm:p-6 transition-colors hover:bg-white/[0.05]">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-accent-purple/20 border border-accent-purple/50 flex items-center justify-center text-xs font-bold text-accent-cyan">
+                      <div className="h-8 w-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold text-slate-300">
                         {(review.userName?.[0] || "?").toUpperCase()}
                       </div>
                       <h3 className="text-sm font-bold text-white">{review.userName || "System"}</h3>
@@ -164,7 +164,7 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
                     <span className="text-accent-cyan">{review.toStatus}</span>
                   </div>
                   {review.note && (
-                    <p className="text-sm leading-relaxed text-slate-300 bg-white/5 p-4 rounded-xl border border-white/5">
+                    <p className="text-sm leading-relaxed text-slate-300 bg-white/[0.03] p-4 rounded-xl border border-white/5">
                       {review.note}
                     </p>
                   )}

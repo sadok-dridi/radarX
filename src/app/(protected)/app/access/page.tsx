@@ -60,7 +60,7 @@ export default async function AccessPage() {
           Approve trusted users, reject weak requests, and keep the real opportunity stream private. When the database
           is not configured, this screen falls back to preview data so the UI stays usable during development.
         </p>
-        <div className="mt-4 inline-flex rounded-full border border-white/10 bg-slate-950/40 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+        <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-400">
           {data.mode === "database" ? "database mode" : "preview mode"}
         </div>
       </section>
@@ -78,13 +78,13 @@ export default async function AccessPage() {
 
         <div className="mt-6 space-y-4">
           {data.pendingRequests.length === 0 ? (
-            <div className="rounded-[24px] border border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
+            <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5 text-sm text-slate-400">
               No pending requests right now.
             </div>
           ) : null}
 
           {data.pendingRequests.map((request) => (
-            <article key={request.id} className="rounded-[24px] border border-white/10 bg-slate-950/40 p-5">
+            <article key={request.id} className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <h3 className="text-lg text-white">
@@ -111,7 +111,7 @@ export default async function AccessPage() {
                       <input type="hidden" name="requestId" value={request.id} />
                       <button
                         type="submit"
-                        className="rounded-full border border-white/10 px-4 py-2 text-sm text-white transition hover:border-white/30 hover:bg-white/5"
+                        className="rounded-full border border-white/10 px-4 py-2 text-sm text-white transition hover:border-white/30 hover:bg-white/[0.03]"
                       >
                         Reject
                       </button>
@@ -136,7 +136,7 @@ export default async function AccessPage() {
             const status = "accessStatus" in member ? member.accessStatus : member.status;
 
             return (
-              <article key={member.id} className="rounded-[24px] border border-white/10 bg-slate-950/40 p-5">
+              <article key={member.id} className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
                 <h3 className="text-lg text-white">{name}</h3>
                 <p className="mt-2 text-sm text-slate-400">{member.email}</p>
                 <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-[0.16em]">

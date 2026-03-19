@@ -13,20 +13,28 @@ type AppShellProps = {
 
 export function AppShell({ children, user }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-ink text-slate-100 bg-radar-grid bg-[size:40px_40px] flex flex-col lg:flex-row">
+    <div className="relative min-h-screen bg-[#09041a] text-slate-100 flex flex-col lg:flex-row overflow-hidden">
+      {/* Background Elements (Matching Landing Page PublicShell exactly) */}
+      <div className="pointer-events-none fixed left-[-10rem] top-[-8rem] h-[24rem] w-[24rem] rounded-full bg-accent-cyan/15 blur-[80px] sm:blur-3xl transform-gpu z-0" />
+      <div className="pointer-events-none fixed right-[-8rem] top-[10rem] h-[22rem] w-[22rem] rounded-full bg-accent-amber/15 blur-[80px] sm:blur-3xl transform-gpu z-0" />
+      <div className="pointer-events-none fixed bottom-[-8rem] left-1/2 h-[20rem] w-[28rem] -translate-x-1/2 rounded-full bg-accent-mint/10 blur-[80px] sm:blur-3xl transform-gpu z-0" />
+      
+      {/* Animated Grid matching Landing Page page.tsx */}
+      <div className="pointer-events-none fixed inset-0 z-0 bg-radar-grid animate-pan-grid opacity-20" />
+
       {/* 
         =========================================================
         MOBILE HEADER & NAVIGATION
         =========================================================
       */}
-      <header className="lg:hidden sticky top-0 z-50 flex flex-col border-b border-accent-purple/30 bg-ink/80 backdrop-blur-2xl">
-        <div className="flex items-center justify-between px-4 py-4">
+      <header className="lg:hidden sticky top-0 z-50 flex flex-col border-b border-white/10 bg-[#09041a]/80 backdrop-blur-2xl">
+        <div className="flex items-center justify-between px-4 py-4 relative z-10">
           <div className="flex items-center gap-3">
-            <span className="h-3 w-3 rounded-full bg-gradient-to-br from-accent-purple to-accent-cyan shadow-glow-blue animate-pulse-slow" />
-            <span className="font-display font-bold tracking-wider text-white text-lg drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">RadarX</span>
+            <span className="h-2 w-2 rounded-full bg-gradient-to-br from-accent-amber to-accent-cyan shadow-[0_0_20px_rgba(56,189,248,0.8)] animate-pulse" />
+            <span className="font-display font-bold tracking-wider text-white text-lg uppercase">RadarX</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="h-8 w-8 rounded-full bg-accent-purple/20 border border-accent-purple/50 flex items-center justify-center text-xs font-bold text-accent-cyan shadow-glow">
+            <div className="h-8 w-8 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center text-xs font-bold text-slate-300">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <form action={logoutAction}>
@@ -38,12 +46,12 @@ export function AppShell({ children, user }: AppShellProps) {
         </div>
         
         {/* Mobile Scrollable Nav */}
-        <nav className="flex overflow-x-auto px-4 pb-3 gap-3 no-scrollbar border-t border-white/5 pt-3">
+        <nav className="flex overflow-x-auto px-4 pb-3 gap-3 no-scrollbar border-t border-white/10 pt-3 relative z-10">
           {appNavigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-300 transition hover:bg-accent-purple/20 hover:text-white border border-transparent hover:border-accent-purple/30 bg-white/5"
+              className="shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-300 transition hover:bg-white/[0.05] hover:text-white border border-white/5 bg-white/[0.03]"
             >
               {item.label}
             </Link>
@@ -56,22 +64,21 @@ export function AppShell({ children, user }: AppShellProps) {
         DESKTOP SIDEBAR
         =========================================================
       */}
-      <aside className="hidden lg:flex flex-col w-[280px] h-screen sticky top-0 border-r border-accent-purple/20 bg-slate-950/60 backdrop-blur-2xl p-6 shadow-glow z-40">
+      <aside className="hidden lg:flex flex-col w-[280px] h-screen sticky top-0 border-r border-white/10 bg-white/[0.03] backdrop-blur-2xl p-6 z-40">
         <div className="mb-12 flex items-center gap-3 relative">
-          <div className="absolute -inset-4 bg-accent-purple/10 blur-xl rounded-full z-0" />
-          <span className="h-4 w-4 rounded-full bg-gradient-to-br from-accent-purple to-accent-cyan shadow-glow-blue animate-pulse-slow relative z-10" />
-          <span className="font-display font-bold text-2xl tracking-wide text-white relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+          <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-accent-amber to-accent-cyan shadow-[0_0_20px_rgba(56,189,248,0.8)] animate-pulse relative z-10" />
+          <span className="font-display font-bold text-2xl tracking-wide text-white uppercase relative z-10">
             RadarX
           </span>
         </div>
 
-        <nav className="flex-1 space-y-1">
+        <nav className="flex-1 space-y-1 relative z-10">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500 mb-4 px-2">Menu</p>
           {appNavigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="group flex items-center rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300 transition-all hover:bg-accent-purple/10 hover:text-white border border-transparent hover:border-accent-purple/30 hover:shadow-[0_0_20px_rgba(147,51,234,0.1)] relative overflow-hidden"
+              className="group flex items-center rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.05] hover:text-white border border-transparent hover:border-white/10 relative overflow-hidden"
             >
               <span className="absolute left-0 top-0 h-full w-1 bg-accent-cyan opacity-0 group-hover:opacity-100 transition-opacity" />
               {item.label}
@@ -79,24 +86,23 @@ export function AppShell({ children, user }: AppShellProps) {
           ))}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-white/5">
-          <div className="rounded-2xl border border-accent-purple/20 bg-slate-900/60 p-4 mb-4 relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-16 h-16 bg-accent-purple/20 blur-2xl rounded-full" />
+        <div className="mt-auto pt-6 border-t border-white/10 relative z-10">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 mb-4 relative overflow-hidden transition-colors hover:border-white/[0.12]">
              <div className="font-semibold text-white truncate relative z-10">{user.name}</div>
              <div className="text-xs mt-1 text-slate-400 truncate relative z-10">{user.email}</div>
              <div className="mt-4 flex items-center justify-between relative z-10">
-                <span className="uppercase tracking-[0.2em] text-[10px] font-bold text-accent-mint px-2.5 py-1 bg-accent-purple/20 rounded-md border border-accent-purple/40">
+                <span className="uppercase tracking-[0.2em] text-[10px] font-bold text-accent-cyan px-2.5 py-1 bg-accent-cyan/10 rounded-md border border-accent-cyan/20">
                   {user.role}
                 </span>
                 <form action={logoutAction}>
-                  <button type="submit" className="text-xs font-semibold text-accent-cyan hover:text-white transition-colors">Logout</button>
+                  <button type="submit" className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Logout</button>
                 </form>
              </div>
           </div>
           
-          <div className="rounded-xl border border-accent-cyan/20 bg-slate-950/90 p-3 shadow-[0_0_15px_rgba(56,189,248,0.1)] flex items-center gap-3">
-             <span className="h-2 w-2 rounded-full bg-accent-cyan animate-pulse shadow-glow-blue" />
-             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent-cyan">System Online</p>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex items-center gap-3">
+             <span className="h-2 w-2 rounded-full bg-accent-mint animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300">System Online</p>
           </div>
         </div>
       </aside>
@@ -106,7 +112,7 @@ export function AppShell({ children, user }: AppShellProps) {
         MAIN CONTENT AREA
         =========================================================
       */}
-      <main className="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 xl:p-10 relative z-10">
+      <main className="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 xl:p-10 relative z-10 overflow-y-auto">
          <div className="mx-auto max-w-6xl">
            {children}
          </div>

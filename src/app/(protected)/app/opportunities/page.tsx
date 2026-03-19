@@ -39,12 +39,12 @@ export default async function OpportunitiesPage({
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
           <Link href={`/app/opportunities/${item.id}`} key={item.id} className="group block h-full">
-            <article className="h-full flex flex-col relative overflow-hidden rounded-[24px] border border-accent-purple/20 bg-slate-950/60 p-5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-accent-cyan/40 hover:shadow-[0_0_25px_rgba(56,189,248,0.15)] hover:bg-slate-900/80">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-accent-purple/10 blur-3xl rounded-full group-hover:bg-accent-cyan/10 transition-colors" />
+            <article className="h-full flex flex-col relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-white/10 hover:bg-white/[0.05] shadow-[0_0_20px_rgba(0,0,0,0.1)]">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent-cyan/10 blur-3xl rounded-full group-hover:bg-accent-cyan/15 transition-colors" />
               
               <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="flex flex-col gap-1">
-                  <span className="inline-flex px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border border-white/10 bg-white/5 text-slate-300 max-w-max">
+                  <span className="inline-flex px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border border-white/10 bg-white/[0.03] text-slate-300 max-w-max">
                     {item.source}
                   </span>
                   <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">
@@ -83,7 +83,7 @@ export default async function OpportunitiesPage({
                   </div>
                 </div>
                 
-                <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center bg-white/5 group-hover:bg-accent-cyan group-hover:border-accent-cyan group-hover:text-ink transition-all text-white">
+                <div className="h-8 w-8 rounded-full border border-white/10 flex items-center justify-center bg-white/[0.03] group-hover:bg-accent-cyan group-hover:border-accent-cyan group-hover:text-ink transition-all text-white">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
@@ -94,8 +94,8 @@ export default async function OpportunitiesPage({
         ))}
         
         {items.length === 0 && (
-          <div className="col-span-full py-12 flex flex-col items-center justify-center text-center border border-dashed border-white/10 rounded-[24px] bg-white/5">
-            <span className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center mb-4 text-slate-400">
+          <div className="col-span-full py-12 flex flex-col items-center justify-center text-center border border-dashed border-white/10 rounded-[24px] bg-white/[0.03]">
+            <span className="h-12 w-12 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 text-slate-400">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>

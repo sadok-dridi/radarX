@@ -12,7 +12,7 @@ export default async function SourcesPage() {
       <h1 className="mt-2 text-3xl tracking-[-0.05em] text-white">Sources</h1>
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((source) => (
-          <article key={source.id} className="rounded-[24px] border border-white/10 bg-slate-950/40 p-5">
+          <article key={source.id} className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl text-white">{source.name}</h2>

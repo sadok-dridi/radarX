@@ -43,7 +43,7 @@ export function ReviewActions({ opportunityId, currentStatus }: { opportunityId:
   }
 
   return (
-    <div className="rounded-[32px] border border-accent-cyan/20 bg-slate-900/60 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_40px_rgba(56,189,248,0.05)] mt-8">
+    <div className="rounded-[32px] border border-accent-cyan/20 bg-white/[0.05] p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_40px_rgba(56,189,248,0.05)] mt-8">
       <div className="flex items-center gap-3 mb-6">
         <span className="h-3 w-3 rounded-full bg-accent-cyan shadow-[0_0_10px_rgba(56,189,248,0.8)] animate-pulse" />
         <h2 className="text-xl font-display font-bold text-white">Review Workflow</h2>
@@ -66,7 +66,7 @@ export function ReviewActions({ opportunityId, currentStatus }: { opportunityId:
                     rounded-xl px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all duration-300
                     ${isActive 
                       ? "bg-accent-cyan text-ink shadow-[0_0_15px_rgba(56,189,248,0.4)] scale-105 border-transparent" 
-                      : "bg-slate-950/80 text-slate-400 border border-white/5 hover:border-accent-cyan/40 hover:text-white"
+                      : "bg-white/[0.03] text-slate-400 border border-white/5 hover:border-accent-cyan/40 hover:text-white"
                     }
                     ${isPending ? "opacity-50 cursor-not-allowed scale-100" : ""}
                   `}
@@ -88,7 +88,7 @@ export function ReviewActions({ opportunityId, currentStatus }: { opportunityId:
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Jot down a quick thought on this lead..."
-              className="w-full resize-none rounded-2xl border border-accent-purple/30 bg-slate-950/80 p-4 text-sm text-white placeholder:text-slate-500 focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all min-h-[120px] shadow-inner"
+              className="w-full resize-none rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white placeholder:text-slate-500 focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all min-h-[120px]"
             />
             <button
               type="submit"

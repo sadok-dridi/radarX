@@ -21,8 +21,8 @@ export default async function ReviewsPage() {
       </div>
       
       {items.length === 0 ? (
-        <div className="rounded-[32px] border border-dashed border-white/10 bg-slate-950/40 p-12 text-center backdrop-blur-xl">
-          <span className="h-12 w-12 rounded-full bg-white/5 mx-auto flex items-center justify-center mb-4 text-slate-400">
+        <div className="rounded-[32px] border border-dashed border-white/10 bg-white/[0.03] p-12 text-center backdrop-blur-2xl">
+          <span className="h-12 w-12 rounded-full bg-white/[0.03] mx-auto flex items-center justify-center mb-4 text-slate-400">
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -33,8 +33,8 @@ export default async function ReviewsPage() {
       ) : (
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           {items.map((review) => (
-            <article key={review.id} className="relative overflow-hidden rounded-[24px] border border-accent-purple/20 bg-slate-950/60 p-5 sm:p-6 backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-accent-cyan/40 hover:shadow-[0_0_20px_rgba(56,189,248,0.1)] group">
-              <div className="absolute top-0 right-0 w-[2px] h-full bg-gradient-to-b from-accent-cyan to-accent-purple opacity-0 group-hover:opacity-100 transition-opacity" />
+            <article key={review.id} className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] p-5 sm:p-6 backdrop-blur-2xl transition-all hover:-translate-y-1 hover:border-white/10 hover:bg-white/[0.05] shadow-[0_0_20px_rgba(0,0,0,0.1)] group">
+              <div className="absolute top-0 right-0 w-[2px] h-full bg-gradient-to-b from-accent-cyan to-accent-mint opacity-0 group-hover:opacity-100 transition-opacity" />
               
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                 <Link 
@@ -50,7 +50,7 @@ export default async function ReviewsPage() {
               
               <div className="flex flex-wrap items-center gap-3 mb-4 relative z-10">
                 <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-full bg-accent-purple/20 border border-accent-purple/50 flex items-center justify-center text-[10px] font-bold text-accent-cyan">
+                  <div className="h-6 w-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-[10px] font-bold text-slate-300">
                     {(review.userName?.[0] || "?").toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-slate-300">{review.userName || "System"}</span>
@@ -65,7 +65,7 @@ export default async function ReviewsPage() {
               </div>
 
               {review.note && (
-                <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/5 relative z-10">
+                <div className="mt-4 p-4 rounded-xl bg-white/[0.03] border border-white/5 relative z-10">
                   <p className="text-sm leading-relaxed text-slate-300 relative z-10">
                     &quot;{review.note}&quot;
                   </p>

@@ -38,7 +38,7 @@ export function OpportunitiesFilters() {
           placeholder="Search intel stream..."
           defaultValue={currentSearch}
           onChange={(e) => updateParams("q", e.target.value)}
-          className="w-full rounded-2xl border border-accent-purple/30 bg-slate-950/60 pl-11 pr-10 py-3 text-sm text-white placeholder:text-slate-500 focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(147,51,234,0.05)] focus:shadow-[0_0_20px_rgba(56,189,248,0.2)]"
+          className="w-full rounded-2xl border border-white/10 bg-white/[0.03] pl-11 pr-10 py-3 text-sm text-white placeholder:text-slate-500 focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(0,0,0,0.2)]"
         />
         {isPending && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -52,7 +52,7 @@ export function OpportunitiesFilters() {
           <select
             value={currentStatus}
             onChange={(e) => updateParams("status", e.target.value)}
-            className="w-full sm:w-auto appearance-none rounded-2xl border border-accent-purple/30 bg-slate-950/60 pl-4 pr-10 py-3 text-sm text-white focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(147,51,234,0.05)] focus:shadow-[0_0_20px_rgba(56,189,248,0.2)] cursor-pointer"
+            className="w-full sm:w-auto appearance-none rounded-2xl border border-white/10 bg-white/[0.03] pl-4 pr-10 py-3 text-sm text-white focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(0,0,0,0.2)] cursor-pointer"
           >
             <option value="all">All statuses</option>
             <option value="new">New</option>

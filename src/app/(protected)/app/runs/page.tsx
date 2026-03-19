@@ -7,7 +7,7 @@ export default function RunsPage() {
       <h1 className="mt-2 text-3xl tracking-[-0.05em] text-white">Runs</h1>
       <div className="mt-6 space-y-4">
         {runs.map((run) => (
-          <article key={run.id} className="rounded-[24px] border border-white/10 bg-slate-950/40 p-5">
+          <article key={run.id} className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-lg text-white">{run.name}</h2>

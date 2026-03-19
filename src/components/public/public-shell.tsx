@@ -16,8 +16,8 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-semibold tracking-[0.2em] text-slate-100 uppercase transition-opacity hover:opacity-80">
               <span className="h-2 w-2 sm:h-3 sm:w-3 shrink-0 rounded-full bg-gradient-to-br from-accent-amber to-accent-cyan shadow-[0_0_20px_rgba(56,189,248,0.8)]" />
-              <span className="hidden sm:inline">Opportunity Radar</span>
-              <span className="sm:hidden">Radar</span>
+              <span className="hidden sm:inline">RadarX</span>
+              <span className="sm:hidden">RadarX</span>
             </Link>
             
             <nav className="flex items-center gap-4 text-xs sm:text-sm">
