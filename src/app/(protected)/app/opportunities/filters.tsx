@@ -59,11 +59,11 @@ export function OpportunitiesFilters() {
           <select
             value={currentSort}
             onChange={(e) => updateParams("sort", e.target.value)}
-            className="w-full sm:w-auto appearance-none rounded-2xl border border-white/10 bg-white/[0.03] pl-4 pr-10 py-3 text-sm text-white focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(0,0,0,0.2)] cursor-pointer"
+            className="w-full sm:w-auto appearance-none rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md pl-4 pr-10 py-3 text-sm text-white focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(0,0,0,0.2)] cursor-pointer"
           >
-            <option value="newest">Newest First</option>
-            <option value="smart">Smart Match (Recommended)</option>
-            <option value="confidence">Highest Confidence</option>
+            <option value="newest" className="bg-[#0f111a] text-white">Newest First</option>
+            <option value="smart" className="bg-[#0f111a] text-white">Smart Match (Recommended)</option>
+            <option value="confidence" className="bg-[#0f111a] text-white">Highest Confidence</option>
           </select>
           <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400 group-hover:text-accent-cyan transition-colors">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,16 +76,16 @@ export function OpportunitiesFilters() {
           <select
             value={currentStatus}
             onChange={(e) => updateParams("status", e.target.value)}
-            className="w-full sm:w-auto appearance-none rounded-2xl border border-white/10 bg-white/[0.03] pl-4 pr-10 py-3 text-sm text-white focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(0,0,0,0.2)] cursor-pointer"
+            className="w-full sm:w-auto appearance-none rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md pl-4 pr-10 py-3 text-sm text-white focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(0,0,0,0.2)] cursor-pointer"
           >
-            <option value="all">All statuses</option>
-            <option value="new">New</option>
-            <option value="interesting">Interesting</option>
-            <option value="qualified">Qualified</option>
-            <option value="watch">Watch</option>
-            <option value="ignored">Ignored</option>
-            <option value="duplicate">Duplicate</option>
-            <option value="acted_on">Acted On</option>
+            <option value="all" className="bg-[#0f111a] text-white">All statuses</option>
+            <option value="new" className="bg-[#0f111a] text-white">New</option>
+            <option value="interesting" className="bg-[#0f111a] text-white">Interesting</option>
+            <option value="qualified" className="bg-[#0f111a] text-white">Qualified</option>
+            <option value="watch" className="bg-[#0f111a] text-white">Watch</option>
+            <option value="ignored" className="bg-[#0f111a] text-white">Ignored</option>
+            <option value="duplicate" className="bg-[#0f111a] text-white">Duplicate</option>
+            <option value="acted_on" className="bg-[#0f111a] text-white">Acted On</option>
           </select>
           <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400 group-hover:text-accent-cyan transition-colors">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
