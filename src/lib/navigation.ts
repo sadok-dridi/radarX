@@ -8,8 +8,7 @@ export const appNavigation = [
   { href: "/app", label: "Overview" },
   { href: "/app/opportunities", label: "Opportunities" },
   { href: "/app/sources", label: "Sources" },
-  { href: "/app/runs", label: "Runs" },
   { href: "/app/reviews", label: "Reviews" },
-  { href: "/app/access", label: "Access" },
-  { href: "/app/settings", label: "Settings" },
+  { href: "/app/access", label: "Access", requireOwner: true },
+  { href: "/app/settings", label: "Settings", requireOwner: true },
 ];

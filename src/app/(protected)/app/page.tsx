@@ -1,17 +1,42 @@
 import { formatRelativeTime } from "@/lib/format";
 import { overviewStats, opportunities, runs } from "@/lib/mock-data";
 import { getDashboardOverview } from "@/lib/data/opportunities";
+import { getCurrentSession } from "@/lib/auth/session";
 import Link from "next/link";
+import { AlertCircle } from "lucide-react";
 
 export default async function DashboardHomePage() {
+  const session = await getCurrentSession();
+  const isOwner = session?.user.role === "owner";
+
   const liveOverview = await getDashboardOverview();
   const stats = liveOverview?.stats ?? overviewStats;
   const items = liveOverview?.opportunities ?? opportunities;
   const latestRuns = liveOverview?.runs ?? runs;
+  const recentFailuresCount = liveOverview?.recentFailuresCount ?? 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
+      {/* 
+        =========================================================
+        N8N WARNING BANNER (OWNERS ONLY)
+        =========================================================
+      */}
+      {isOwner && recentFailuresCount > 0 && (
+        <section className="relative overflow-hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-4 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.15)] flex items-start sm:items-center gap-4">
+          <div className="flex-shrink-0 mt-0.5 sm:mt-0">
+            <AlertCircle className="h-6 w-6 text-red-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-red-200">System Warning: Workflow Failures Detected</h3>
+            <p className="mt-1 text-sm text-red-300/80">
+              There have been <strong className="text-red-200">{recentFailuresCount}</strong> failed n8n workflows in the last 24 hours. Please check your n8n dashboard to review the logs.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* 
         =========================================================
         TOP STATS GRID

@@ -31,6 +31,7 @@ export type DashboardOverview = {
     duration: string | null;
     itemsOut: number;
   }>;
+  recentFailuresCount: number;
 };
 
 export type SourceCard = {
@@ -64,6 +65,7 @@ type OverviewStatsRow = {
   high_confidence_leads: string;
   pending_ai_tasks: string;
   active_sources: string;
+  recent_failures: string;
 };
 
 type RunRow = {
@@ -175,7 +177,8 @@ export async function getDashboardOverview(): Promise<DashboardOverview | null> 
           (SELECT COUNT(*) FROM opportunities) AS total_opportunities,
           (SELECT COUNT(*) FROM opportunities WHERE confidence >= 80) AS high_confidence_leads,
           (SELECT COUNT(*) FROM ai_tasks WHERE status = 'pending') AS pending_ai_tasks,
-          (SELECT COUNT(*) FROM sources WHERE is_active = true) AS active_sources
+          (SELECT COUNT(*) FROM sources WHERE is_active = true) AS active_sources,
+          (SELECT COUNT(*) FROM workflow_runs WHERE status IN ('failed', 'partially_failed') AND started_at >= NOW() - INTERVAL '24 hours') AS recent_failures
       `),
       db.query<OpportunityRow>(`
         SELECT
@@ -248,6 +251,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview | null> 
         duration: formatDuration(row.started_at, row.finished_at),
         itemsOut: Number(row.item_count_out || 0),
       })),
+      recentFailuresCount: Number(statsRow?.recent_failures || 0),
     };
   });
 }
@@ -265,8 +269,8 @@ export async function getOpportunitiesList(filters?: {
     let paramIndex = 1;
 
     if (filters?.search) {
-      baseWhere += ` AND (o.title ILIKE $${paramIndex} OR o.content ILIKE $${paramIndex})`;
-      params.push(`%${filters.search}%`);
+      baseWhere += ` AND o.search_document @@ websearch_to_tsquery('english', $${paramIndex})`;
+      params.push(filters.search);
       paramIndex++;
     }
 
@@ -289,7 +293,10 @@ export async function getOpportunitiesList(filters?: {
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
     let orderBy = "ORDER BY o.last_seen_at DESC NULLS LAST";
-    if (filters?.sort === "smart") {
+    if (filters?.search && filters?.sort === "smart") {
+      // When searching with smart sort, rank by search relevance first, then score
+      orderBy = `ORDER BY ts_rank(o.search_document, websearch_to_tsquery('english', $1)) DESC, o.score DESC NULLS LAST, o.last_seen_at DESC NULLS LAST`;
+    } else if (filters?.sort === "smart") {
       orderBy = "ORDER BY o.score DESC NULLS LAST, o.confidence DESC NULLS LAST, o.last_seen_at DESC NULLS LAST";
     } else if (filters?.sort === "confidence") {
       orderBy = "ORDER BY o.confidence DESC NULLS LAST, o.score DESC NULLS LAST, o.last_seen_at DESC NULLS LAST";

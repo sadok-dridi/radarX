@@ -47,15 +47,18 @@ export function AppShell({ children, user }: AppShellProps) {
         
         {/* Mobile Scrollable Nav */}
         <nav className="flex overflow-x-auto px-4 pb-3 gap-3 no-scrollbar border-t border-white/10 pt-3 relative z-10">
-          {appNavigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-300 transition hover:bg-white/[0.05] hover:text-white border border-white/5 bg-white/[0.03]"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {appNavigation.map((item) => {
+            if (item.requireOwner && user.role !== "owner") return null;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="shrink-0 rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-300 transition hover:bg-white/[0.05] hover:text-white border border-white/5 bg-white/[0.03]"
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </header>
 
@@ -74,16 +77,19 @@ export function AppShell({ children, user }: AppShellProps) {
 
         <nav className="flex-1 space-y-1 relative z-10">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500 mb-4 px-2">Menu</p>
-          {appNavigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group flex items-center rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.05] hover:text-white border border-transparent hover:border-white/10 relative overflow-hidden"
-            >
-              <span className="absolute left-0 top-0 h-full w-1 bg-accent-cyan opacity-0 group-hover:opacity-100 transition-opacity" />
-              {item.label}
-            </Link>
-          ))}
+          {appNavigation.map((item) => {
+            if (item.requireOwner && user.role !== "owner") return null;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group flex items-center rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.05] hover:text-white border border-transparent hover:border-white/10 relative overflow-hidden"
+              >
+                <span className="absolute left-0 top-0 h-full w-1 bg-accent-cyan opacity-0 group-hover:opacity-100 transition-opacity" />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="mt-auto pt-6 border-t border-white/10 relative z-10">
