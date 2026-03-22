@@ -260,6 +260,7 @@ export async function getOpportunitiesList(filters?: {
   search?: string;
   status?: string;
   sort?: string;
+  field?: string;
   page?: number;
   limit?: number;
 }): Promise<{ items: DashboardOpportunity[]; totalCount: number; totalPages: number } | null> {
@@ -267,11 +268,35 @@ export async function getOpportunitiesList(filters?: {
     let baseWhere = "WHERE 1=1";
     const params: any[] = [];
     let paramIndex = 1;
+    let searchParamIndex: number | null = null;
 
     if (filters?.search) {
       baseWhere += ` AND o.search_document @@ websearch_to_tsquery('english', $${paramIndex})`;
       params.push(filters.search);
+      searchParamIndex = paramIndex;
       paramIndex++;
+    }
+    
+    if (filters?.field && filters.field !== "all") {
+      const fieldTerms: Record<string, string> = {
+        software: "(developer OR engineer OR software OR react OR node OR frontend OR backend OR fullstack OR python OR web)",
+        video: "(video OR edit OR editor OR premiere OR after effects OR capcut OR animation OR motion)",
+        design: "(design OR designer OR figma OR photoshop OR illustrator OR UI OR UX OR graphic)",
+        marketing: "(marketing OR SEO OR growth OR ads OR social media OR campaign OR outreach)",
+        writing: "(writer OR writing OR copywriter OR content OR blog OR translation OR script)",
+        admin: "(admin OR virtual assistant OR VA OR support OR customer service OR data entry)"
+      };
+
+      const fieldTerm = fieldTerms[filters.field];
+      if (fieldTerm) {
+        baseWhere += ` AND o.search_document @@ websearch_to_tsquery('english', $${paramIndex})`;
+        params.push(fieldTerm);
+        // If there's no custom search but there is a field, use field for smart ranking
+        if (!searchParamIndex) {
+          searchParamIndex = paramIndex;
+        }
+        paramIndex++;
+      }
     }
 
     if (filters?.status && filters.status !== "all") {
@@ -293,9 +318,8 @@ export async function getOpportunitiesList(filters?: {
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
     let orderBy = "ORDER BY o.last_seen_at DESC NULLS LAST";
-    if (filters?.search && filters?.sort === "smart") {
-      // When searching with smart sort, rank by search relevance first, then score
-      orderBy = `ORDER BY ts_rank(o.search_document, websearch_to_tsquery('english', $1)) DESC, o.score DESC NULLS LAST, o.last_seen_at DESC NULLS LAST`;
+    if (searchParamIndex && filters?.sort === "smart") {
+      orderBy = `ORDER BY ts_rank(o.search_document, websearch_to_tsquery('english', $${searchParamIndex})) DESC, o.score DESC NULLS LAST, o.last_seen_at DESC NULLS LAST`;
     } else if (filters?.sort === "smart") {
       orderBy = "ORDER BY o.score DESC NULLS LAST, o.confidence DESC NULLS LAST, o.last_seen_at DESC NULLS LAST";
     } else if (filters?.sort === "confidence") {

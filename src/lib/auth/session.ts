@@ -117,7 +117,6 @@ export async function getCurrentSession(options?: { allowDevBypass?: boolean }):
     const user = await db.user.findUnique({ where: { id: userId } });
 
     if (!user || user.accessStatus !== "active") {
-      await destroyUserSession();
       return null;
     }
 
@@ -130,7 +129,6 @@ export async function getCurrentSession(options?: { allowDevBypass?: boolean }):
       },
     };
   } catch {
-    await destroyUserSession();
     return null;
   }
 }

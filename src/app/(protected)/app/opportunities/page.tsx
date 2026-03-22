@@ -15,9 +15,10 @@ export default async function OpportunitiesPage({
   const q = typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
   const status = typeof resolvedParams.status === "string" ? resolvedParams.status : undefined;
   const sort = typeof resolvedParams.sort === "string" ? resolvedParams.sort : "newest";
+  const field = typeof resolvedParams.field === "string" ? resolvedParams.field : undefined;
   const page = typeof resolvedParams.page === "string" ? parseInt(resolvedParams.page, 10) : 1;
 
-  const liveOpportunities = await getOpportunitiesList({ search: q, status, sort, page, limit: 12 });
+  const liveOpportunities = await getOpportunitiesList({ search: q, status, sort, field, page, limit: 12 });
   
   const items = liveOpportunities?.items ?? mockOpportunities;
   const totalPages = liveOpportunities?.totalPages ?? 1;

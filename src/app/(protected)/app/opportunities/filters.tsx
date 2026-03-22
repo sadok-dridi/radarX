@@ -12,6 +12,7 @@ export function OpportunitiesFilters() {
   const currentSearch = searchParams.get("q") || "";
   const currentStatus = searchParams.get("status") || "all";
   const currentSort = searchParams.get("sort") || "newest";
+  const currentField = searchParams.get("field") || "all";
 
   function updateParams(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -55,6 +56,27 @@ export function OpportunitiesFilters() {
       </div>
       
       <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative group w-full sm:w-auto">
+          <select
+            value={currentField}
+            onChange={(e) => updateParams("field", e.target.value)}
+            className="w-full sm:w-auto appearance-none rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md pl-4 pr-10 py-3 text-sm text-white focus:border-accent-cyan focus:outline-none focus:ring-1 focus:ring-accent-cyan transition-all shadow-[0_0_15px_rgba(0,0,0,0.2)] cursor-pointer"
+          >
+            <option value="all" className="bg-[#0f111a] text-white">All Fields</option>
+            <option value="software" className="bg-[#0f111a] text-white">Software & Web Dev</option>
+            <option value="video" className="bg-[#0f111a] text-white">Video & Animation</option>
+            <option value="design" className="bg-[#0f111a] text-white">Design & Graphics</option>
+            <option value="marketing" className="bg-[#0f111a] text-white">Marketing & SEO</option>
+            <option value="writing" className="bg-[#0f111a] text-white">Writing & Translation</option>
+            <option value="admin" className="bg-[#0f111a] text-white">Admin & Support</option>
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400 group-hover:text-accent-cyan transition-colors">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
         <div className="relative group w-full sm:w-auto">
           <select
             value={currentSort}
