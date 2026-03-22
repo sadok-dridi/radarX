@@ -23,6 +23,19 @@ export default async function OpportunitiesPage({
   const items = liveOpportunities?.items ?? mockOpportunities;
   const totalPages = liveOpportunities?.totalPages ?? 1;
 
+  const queryParams = new URLSearchParams();
+  Object.entries(resolvedParams).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (Array.isArray(value)) {
+        value.forEach((v) => queryParams.append(key, v));
+      } else {
+        queryParams.set(key, value);
+      }
+    }
+  });
+  const queryString = queryParams.toString();
+  const searchSuffix = queryString ? `?${queryString}` : "";
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between mb-8">
@@ -44,7 +57,7 @@ export default async function OpportunitiesPage({
       {/* MOBILE & DESKTOP CARD GRID */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
-          <Link href={`/app/opportunities/${item.id}`} key={item.id} className="group block h-full">
+          <Link href={`/app/opportunities/${item.id}${searchSuffix}`} key={item.id} className="group block h-full">
             <article className="h-full flex flex-col relative overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] p-5 backdrop-blur-2xl transition-all duration-300 hover:-translate-y-1 hover:border-white/10 hover:bg-white/[0.05] shadow-[0_0_20px_rgba(0,0,0,0.1)]">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent-cyan/10 blur-3xl rounded-full group-hover:bg-accent-cyan/15 transition-colors" />
               

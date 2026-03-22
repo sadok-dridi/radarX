@@ -1,13 +1,21 @@
 import { notFound } from "next/navigation";
 
-import { getOpportunityDetail } from "@/lib/data/opportunities";
+import { getOpportunityDetail, getOpportunitiesList } from "@/lib/data/opportunities";
 import { formatDateTime, formatRelativeTime } from "@/lib/format";
 import { opportunities } from "@/lib/mock-data";
 import { ReviewActions } from "./review-actions";
 import Link from "next/link";
 
-export default async function OpportunityDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OpportunityDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const { id } = await params;
+  const resolvedParams = await searchParams;
+  
   const liveDetail = await getOpportunityDetail(id);
 
   const opportunity = liveDetail?.opportunity ?? opportunities.find((item) => item.id === id);
@@ -16,14 +24,73 @@ export default async function OpportunityDetailPage({ params }: { params: Promis
     notFound();
   }
 
+  // Reconstruct query string for the back button
+  const queryParams = new URLSearchParams();
+  Object.entries(resolvedParams).forEach(([key, value]) => {
+    if (value !== undefined) {
+      if (Array.isArray(value)) {
+        value.forEach((v) => queryParams.append(key, v));
+      } else {
+        queryParams.set(key, value);
+      }
+    }
+  });
+  const queryString = queryParams.toString();
+  const backHref = queryString ? `/app/opportunities?${queryString}` : "/app/opportunities";
+
+  // Logic to find the next opportunity
+  const q = typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
+  const status = typeof resolvedParams.status === "string" ? resolvedParams.status : undefined;
+  const sort = typeof resolvedParams.sort === "string" ? resolvedParams.sort : "newest";
+  const field = typeof resolvedParams.field === "string" ? resolvedParams.field : undefined;
+  const page = typeof resolvedParams.page === "string" ? parseInt(resolvedParams.page, 10) : 1;
+
+  const liveList = await getOpportunitiesList({ search: q, status, sort, field, page, limit: 12 });
+  const listItems = liveList?.items ?? opportunities;
+  const listTotalPages = liveList?.totalPages ?? 1;
+  
+  let nextOpportunityId: string | null = null;
+  const nextSearchParams = new URLSearchParams(queryParams);
+
+  if (listItems) {
+    const currentIndex = listItems.findIndex((item) => item.id === id);
+    if (currentIndex !== -1) {
+      if (currentIndex < listItems.length - 1) {
+        nextOpportunityId = listItems[currentIndex + 1].id;
+      } else if (page < listTotalPages) {
+        const nextList = await getOpportunitiesList({ search: q, status, sort, field, page: page + 1, limit: 12 });
+        const nextListItems = nextList?.items ?? opportunities;
+        if (nextListItems.length > 0) {
+          nextOpportunityId = nextListItems[0].id;
+          nextSearchParams.set("page", String(page + 1));
+        }
+      }
+    }
+  }
+
+  const nextQueryString = nextSearchParams.toString();
+  const nextHref = nextOpportunityId 
+    ? `/app/opportunities/${nextOpportunityId}${nextQueryString ? `?${nextQueryString}` : ""}` 
+    : null;
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
-      <Link href="/app/opportunities" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-accent-cyan transition-colors mb-2">
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to Stream
-      </Link>
+      <div className="flex items-center justify-between mb-2">
+        <Link href={backHref} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-accent-cyan transition-colors">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Stream
+        </Link>
+        {nextHref && (
+          <Link href={nextHref} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-accent-cyan transition-colors">
+            Next Post
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </Link>
+        )}
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <section className="rounded-[32px] border border-white/10 bg-white/[0.05] p-6 sm:p-10 shadow-[0_0_30px_rgba(0,0,0,0.2)] backdrop-blur-2xl relative overflow-hidden">
