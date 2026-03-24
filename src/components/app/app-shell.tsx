@@ -13,7 +13,7 @@ type AppShellProps = {
 
 export function AppShell({ children, user }: AppShellProps) {
   return (
-    <div className="relative min-h-screen bg-[#09041a] text-slate-100 flex flex-col lg:flex-row overflow-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-[#09041a] text-slate-100 lg:block">
       {/* Background Elements (Matching Landing Page PublicShell exactly) */}
       <div className="pointer-events-none fixed left-[-10rem] top-[-8rem] h-[24rem] w-[24rem] rounded-full bg-accent-cyan/15 blur-[80px] sm:blur-3xl transform-gpu z-0" />
       <div className="pointer-events-none fixed right-[-8rem] top-[10rem] h-[22rem] w-[22rem] rounded-full bg-accent-amber/15 blur-[80px] sm:blur-3xl transform-gpu z-0" />
@@ -31,7 +31,12 @@ export function AppShell({ children, user }: AppShellProps) {
         <div className="flex items-center justify-between px-4 py-4 relative z-10">
           <div className="flex items-center gap-3">
             <span className="h-2 w-2 rounded-full bg-gradient-to-br from-accent-amber to-accent-cyan shadow-[0_0_20px_rgba(56,189,248,0.8)] animate-pulse" />
-            <span className="font-display font-bold tracking-wider text-white text-lg uppercase">RadarX</span>
+            <div className="flex items-center gap-2">
+              <span className="font-display text-lg font-bold tracking-wider text-white uppercase">RadarX</span>
+              <span className="rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.24em] text-accent-cyan">
+                Beta
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center text-xs font-bold text-slate-300">
@@ -67,12 +72,15 @@ export function AppShell({ children, user }: AppShellProps) {
         DESKTOP SIDEBAR
         =========================================================
       */}
-      <aside className="hidden lg:flex flex-col w-[280px] h-screen sticky top-0 border-r border-white/10 bg-white/[0.03] backdrop-blur-2xl p-6 z-40">
+      <aside className="hidden lg:fixed lg:left-0 lg:top-0 lg:z-40 lg:flex lg:h-screen lg:w-[280px] lg:flex-col lg:border-r lg:border-white/10 lg:bg-white/[0.03] lg:p-6 lg:backdrop-blur-2xl">
         <div className="mb-12 flex items-center gap-3 relative">
           <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-accent-amber to-accent-cyan shadow-[0_0_20px_rgba(56,189,248,0.8)] animate-pulse relative z-10" />
-          <span className="font-display font-bold text-2xl tracking-wide text-white uppercase relative z-10">
-            RadarX
-          </span>
+          <div className="relative z-10 flex items-center gap-3">
+            <span className="font-display text-2xl font-bold tracking-wide text-white uppercase">RadarX</span>
+            <span className="rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-accent-cyan">
+              Beta
+            </span>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1 relative z-10">
@@ -118,7 +126,7 @@ export function AppShell({ children, user }: AppShellProps) {
         MAIN CONTENT AREA
         =========================================================
       */}
-      <main className="flex-1 w-full min-w-0 p-4 sm:p-6 lg:p-8 xl:p-10 relative z-10 overflow-y-auto">
+      <main className="relative z-10 w-full min-w-0 p-4 sm:p-6 lg:ml-[280px] lg:w-[calc(100%-280px)] lg:p-8 xl:p-10">
          <div className="mx-auto max-w-6xl">
            {children}
          </div>

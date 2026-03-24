@@ -109,7 +109,7 @@ export default function LandingPage() {
           initial="hidden"
           animate="show"
         >
-          <motion.div variants={fadeUp} className="mb-6 flex justify-center">
+          <motion.div variants={fadeUp} className="mb-6 flex flex-col items-center gap-3">
             <span className="flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-medium uppercase tracking-widest text-accent-cyan backdrop-blur-md">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-cyan opacity-75"></span>
@@ -117,6 +117,16 @@ export default function LandingPage() {
               </span>
               Lead Discovery Engine
             </span>
+            <a
+              href="https://sadokportfolio.mooo.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 flex items-center gap-2 rounded-full border border-white/5 bg-white/[0.02] px-3 py-1 backdrop-blur-sm shadow-[0_0_15px_rgba(0,0,0,0.2)] transition-all hover:border-white/10 hover:bg-white/[0.04] hover:shadow-[0_0_24px_rgba(56,189,248,0.12)]"
+            >
+              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400 sm:text-xs">
+                Built by <span className="font-bold bg-gradient-to-r from-accent-cyan to-accent-mint bg-clip-text text-transparent">sadok</span>
+              </span>
+            </a>
           </motion.div>
 
           <motion.h1 variants={fadeUp} className="text-4xl leading-[1.15] font-bold tracking-tight text-white sm:text-7xl lg:text-8xl">
