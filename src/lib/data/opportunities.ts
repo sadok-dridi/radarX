@@ -197,6 +197,7 @@ export async function getDashboardOverview(): Promise<DashboardOverview | null> 
           o.canonical_url
         FROM opportunities o
         LEFT JOIN sources s ON s.id = o.source_id
+        WHERE o.status != 'ignored' AND o.is_job IS NOT NULL
         ORDER BY o.last_seen_at DESC
         LIMIT 6
       `),
@@ -300,9 +301,15 @@ export async function getOpportunitiesList(filters?: {
     }
 
     if (filters?.status && filters.status !== "all") {
-      baseWhere += ` AND o.status::text = $${paramIndex}`;
-      params.push(filters.status);
-      paramIndex++;
+      if (filters.status === "unreviewed_noise") {
+        baseWhere += ` AND (o.status = 'ignored' OR o.is_job IS NULL)`;
+      } else {
+        baseWhere += ` AND o.status::text = $${paramIndex}`;
+        params.push(filters.status);
+        paramIndex++;
+      }
+    } else {
+      baseWhere += ` AND o.is_job IS NOT NULL`;
     }
 
     // Get total count

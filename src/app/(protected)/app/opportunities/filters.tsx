@@ -106,6 +106,7 @@ export function OpportunitiesFilters() {
             <option value="qualified" className="bg-[#0f111a] text-white">Qualified</option>
             <option value="watch" className="bg-[#0f111a] text-white">Watch</option>
             <option value="ignored" className="bg-[#0f111a] text-white">Ignored</option>
+            <option value="unreviewed_noise" className="bg-[#0f111a] text-white">Unreviewed & Noise</option>
             <option value="duplicate" className="bg-[#0f111a] text-white">Duplicate</option>
             <option value="acted_on" className="bg-[#0f111a] text-white">Acted On</option>
           </select>
