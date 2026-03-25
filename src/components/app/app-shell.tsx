@@ -100,8 +100,21 @@ export function AppShell({ children, user }: AppShellProps) {
           })}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-white/10 relative z-10">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 mb-4 relative overflow-hidden transition-colors hover:border-white/[0.12]">
+        <div className="mt-auto pt-6 border-t border-white/10 relative z-10 flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
+            <div className="inline-flex items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-left shadow-[0_0_24px_rgba(0,0,0,0.12)] backdrop-blur-sm">
+              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent-amber shadow-[0_0_12px_rgba(251,191,36,0.6)]" />
+              <p className="text-[11px] leading-relaxed text-slate-400">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.24em] text-accent-amber">
+                  Active Build
+                </span>
+                RadarX is evolving daily with tighter workflows, cleaner scoring, and steady feature updates.
+              </p>
+            </div>
+            
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 relative overflow-hidden transition-colors hover:border-white/[0.12]">
              <div className="font-semibold text-white truncate relative z-10">{user.name}</div>
              <div className="text-xs mt-1 text-slate-400 truncate relative z-10">{user.email}</div>
              <div className="mt-4 flex items-center justify-between relative z-10">
@@ -114,10 +127,7 @@ export function AppShell({ children, user }: AppShellProps) {
              </div>
           </div>
           
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex items-center gap-3">
-             <span className="h-2 w-2 rounded-full bg-accent-mint animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300">System Online</p>
-          </div>
+        
         </div>
       </aside>
 
