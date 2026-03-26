@@ -7,6 +7,355 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                     String               @id @default(uuid()) @db.Uuid
+  email                  String               @unique
+  displayName            String?              @map("display_name")
+  passwordHash           String?              @map("password_hash")
+  role                   UserRole             @default(member)
+  accessStatus           UserAccessStatus     @default(pending) @map("access_status")
+  approvedAt             DateTime?            @map("approved_at")
+  approvedByUserId       String?              @map("approved_by_user_id") @db.Uuid
+  lastLoginAt            DateTime?            @map("last_login_at")
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
+  googleId               String?              @unique @map("google_id")
+  provider               AuthProvider         @default(email)
+  linkedAccessRequests   AccessRequest[]      @relation("RequestLinkedUser")
+  reviewedAccessRequests AccessRequest[]      @relation("RequestReviewer")
+  opportunities          opportunities[]
+  passwordResetTokens    PasswordResetToken[]
+  reviews                reviews[]
+  approvedByUser         User?                @relation("UserApprovals", fields: [approvedByUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  approvedUsers          User[]               @relation("UserApprovals")
+  workflow_runs          workflow_runs[]
+
+  @@index([accessStatus])
+  @@index([role])
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String   @unique
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+model AccessRequest {
+  id             String              @id @default(uuid()) @db.Uuid
+  email          String
+  displayName    String?             @map("display_name")
+  message        String?
+  status         AccessRequestStatus @default(pending)
+  requestedAt    DateTime            @default(now()) @map("requested_at")
+  reviewedAt     DateTime?           @map("reviewed_at")
+  reviewerUserId String?             @map("reviewer_user_id") @db.Uuid
+  linkedUserId   String?             @map("linked_user_id") @db.Uuid
+  decisionNote   String?             @map("decision_note")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  linkedUser     User?               @relation("RequestLinkedUser", fields: [linkedUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reviewerUser   User?               @relation("RequestReviewer", fields: [reviewerUserId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([status, requestedAt(sort: Desc)])
+  @@map("access_requests")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ai_tasks {
+  id                  String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opportunity_id      String        @db.Uuid
+  status              String        @default("pending")
+  provider_preference String        @default("local")
+  provider_used       String?
+  model_name          String?
+  priority            Int           @default(100)
+  attempt_count       Int           @default(0)
+  lease_until         DateTime?     @db.Timestamptz(6)
+  assigned_worker     String?
+  payload             Json          @default("{}")
+  result              Json?
+  last_error          String?
+  created_at          DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime      @default(now()) @db.Timestamptz(6)
+  completed_at        DateTime?     @db.Timestamptz(6)
+  opportunities       opportunities @relation(fields: [opportunity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([lease_until])
+  @@index([status, priority, created_at], map: "ai_tasks_status_priority_idx")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ai_worker_control {
+  worker_name   String    @id
+  desired_state String    @default("paused")
+  auto_resume   Boolean   @default(false)
+  last_command  String?
+  last_seen_at  DateTime? @db.Timestamptz(6)
+  metadata      Json      @default("{}")
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6)
+}
+
+model alerts {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opportunity_id  String         @db.Uuid
+  workflow_run_id String?        @db.Uuid
+  channel         alert_channel
+  status          alert_status   @default(pending)
+  destination     String?
+  sent_at         DateTime?      @db.Timestamptz(6)
+  error_message   String?
+  payload         Json           @default("{}")
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  opportunities   opportunities  @relation(fields: [opportunity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workflow_runs   workflow_runs? @relation(fields: [workflow_run_id], references: [id], onUpdate: NoAction)
+
+  @@index([opportunity_id, created_at(sort: Desc)])
+  @@index([status, created_at(sort: Desc)])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model classifications {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opportunity_id      String              @db.Uuid
+  workflow_run_id     String?             @db.Uuid
+  classification_type classification_type
+  provider            String?
+  model_name          String?
+  verdict             String?
+  is_positive         Boolean?
+  score               Int?
+  confidence          Int?
+  reason              String?
+  payload             Json                @default("{}")
+  created_at          DateTime            @default(now()) @db.Timestamptz(6)
+  opportunities       opportunities       @relation(fields: [opportunity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workflow_runs       workflow_runs?      @relation(fields: [workflow_run_id], references: [id], onUpdate: NoAction)
+
+  @@index([opportunity_id, created_at(sort: Desc)])
+  @@index([workflow_run_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model opportunities {
+  id                                                           String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source_id                                                    String                     @db.Uuid
+  first_seen_run_id                                            String?                    @db.Uuid
+  last_seen_run_id                                             String?                    @db.Uuid
+  reviewed_by_user_id                                          String?                    @db.Uuid
+  duplicate_of_opportunity_id                                  String?                    @db.Uuid
+  platform                                                     source_platform
+  source_record_key                                            String                     @unique
+  content_fingerprint                                          String?
+  source_native_id                                             String?
+  canonical_url                                                String
+  title                                                        String
+  content                                                      String?
+  author_name                                                  String?
+  published_at                                                 DateTime?                  @db.Timestamptz(6)
+  first_seen_at                                                DateTime                   @default(now()) @db.Timestamptz(6)
+  last_seen_at                                                 DateTime                   @default(now()) @db.Timestamptz(6)
+  reviewed_at                                                  DateTime?                  @db.Timestamptz(6)
+  score                                                        Int                        @default(0)
+  confidence                                                   Int                        @default(0)
+  status                                                       opportunity_status         @default(new)
+  routing_action                                               opportunity_routing_action @default(review)
+  intent                                                       opportunity_intent         @default(unknown)
+  is_job                                                       Boolean?
+  ai_reason                                                    String?
+  location_text                                                String?
+  category                                                     String?
+  extracted_entities                                           Json                       @default("{}")
+  raw_payload                                                  Json                       @default("{}")
+  created_at                                                   DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                                                   DateTime                   @default(now()) @db.Timestamptz(6)
+  search_document                                              Unsupported("tsvector")?   @default(dbgenerated("to_tsvector('english'::regconfig, ((((((((COALESCE(title, ''::text) || ' '::text) || COALESCE(content, ''::text)) || ' '::text) || COALESCE(author_name, ''::text)) || ' '::text) || COALESCE(location_text, ''::text)) || ' '::text) || COALESCE(category, ''::text)))"))
+  ai_tasks                                                     ai_tasks[]
+  alerts                                                       alerts[]
+  classifications                                              classifications[]
+  opportunities                                                opportunities?             @relation("opportunitiesToopportunities", fields: [duplicate_of_opportunity_id], references: [id], onUpdate: NoAction)
+  other_opportunities                                          opportunities[]            @relation("opportunitiesToopportunities")
+  workflow_runs_opportunities_first_seen_run_idToworkflow_runs workflow_runs?             @relation("opportunities_first_seen_run_idToworkflow_runs", fields: [first_seen_run_id], references: [id], onUpdate: NoAction)
+  workflow_runs_opportunities_last_seen_run_idToworkflow_runs  workflow_runs?             @relation("opportunities_last_seen_run_idToworkflow_runs", fields: [last_seen_run_id], references: [id], onUpdate: NoAction)
+  users                                                        User?                      @relation(fields: [reviewed_by_user_id], references: [id], onUpdate: NoAction)
+  sources                                                      sources                    @relation(fields: [source_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  opportunity_tags                                             opportunity_tags[]
+  reviews                                                      reviews[]
+
+  @@index([content_fingerprint])
+  @@index([published_at(sort: Desc)])
+  @@index([routing_action, created_at(sort: Desc)])
+  @@index([search_document], type: Gin)
+  @@index([source_id, last_seen_at(sort: Desc)])
+  @@index([status, confidence(sort: Desc), score(sort: Desc)])
+}
+
+model opportunity_tags {
+  opportunity_id String        @db.Uuid
+  tag_id         String        @db.Uuid
+  created_at     DateTime      @default(now()) @db.Timestamptz(6)
+  opportunities  opportunities @relation(fields: [opportunity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tags           tags          @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([opportunity_id, tag_id])
+}
+
+model reviews {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opportunity_id   String              @db.Uuid
+  reviewer_user_id String              @db.Uuid
+  action           review_action
+  from_status      opportunity_status?
+  to_status        opportunity_status?
+  note             String?
+  created_at       DateTime            @default(now()) @db.Timestamptz(6)
+  opportunities    opportunities       @relation(fields: [opportunity_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users            User                @relation(fields: [reviewer_user_id], references: [id], onUpdate: NoAction)
+
+  @@index([opportunity_id, created_at(sort: Desc)])
+  @@index([reviewer_user_id, created_at(sort: Desc)])
+}
+
+model source_discoveries {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source_id         String         @db.Uuid
+  workflow_run_id   String?        @db.Uuid
+  discovery_query   String
+  discovery_title   String?
+  discovery_excerpt String?
+  discovery_url     String?
+  raw_payload       Json           @default("{}")
+  discovered_at     DateTime       @default(now()) @db.Timestamptz(6)
+  created_at        DateTime       @default(now()) @db.Timestamptz(6)
+  sources           sources        @relation(fields: [source_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workflow_runs     workflow_runs? @relation(fields: [workflow_run_id], references: [id], onUpdate: NoAction)
+
+  @@index([discovery_query, discovered_at(sort: Desc)], map: "source_discoveries_query_discovered_at_idx")
+  @@index([source_id, discovered_at(sort: Desc)])
+}
+
+model source_runs {
+  id                          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workflow_run_id             String              @db.Uuid
+  source_id                   String              @db.Uuid
+  run_kind                    source_run_kind     @default(monitoring_scan)
+  status                      workflow_run_status @default(queued)
+  started_at                  DateTime            @default(now()) @db.Timestamptz(6)
+  finished_at                 DateTime?           @db.Timestamptz(6)
+  items_in                    Int                 @default(0)
+  items_out                   Int                 @default(0)
+  matched_opportunities_count Int                 @default(0)
+  error_count                 Int                 @default(0)
+  error_summary               String?
+  run_metadata                Json                @default("{}")
+  created_at                  DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at                  DateTime            @default(now()) @db.Timestamptz(6)
+  sources                     sources             @relation(fields: [source_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workflow_runs               workflow_runs       @relation(fields: [workflow_run_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([source_id, started_at(sort: Desc)])
+  @@index([workflow_run_id])
+}
+
+model source_tags {
+  source_id  String   @db.Uuid
+  tag_id     String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  sources    sources  @relation(fields: [source_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tags       tags     @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([source_id, tag_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sources {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platform               source_platform
+  kind                   source_kind
+  normalized_key         String                   @unique
+  name                   String
+  slug                   String?
+  external_id            String?
+  canonical_url          String?
+  feed_url               String?
+  description            String?
+  state                  source_state             @default(candidate)
+  monitoring_mode        source_monitoring_mode   @default(monitored)
+  is_active              Boolean                  @default(true)
+  relevance_score        Int                      @default(0)
+  confidence             Int                      @default(0)
+  scan_interval_minutes  Int?
+  discovered_via_run_id  String?                  @db.Uuid
+  discovered_by_query    String?
+  first_seen_at          DateTime                 @default(now()) @db.Timestamptz(6)
+  last_seen_at           DateTime                 @default(now()) @db.Timestamptz(6)
+  last_scanned_at        DateTime?                @db.Timestamptz(6)
+  last_successful_run_at DateTime?                @db.Timestamptz(6)
+  source_metadata        Json                     @default("{}")
+  created_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  search_document        Unsupported("tsvector")? @default(dbgenerated("to_tsvector('english'::regconfig, ((((((COALESCE(name, ''::text) || ' '::text) || COALESCE(slug, ''::text)) || ' '::text) || COALESCE(description, ''::text)) || ' '::text) || COALESCE(canonical_url, ''::text)))"))
+  opportunities          opportunities[]
+  source_discoveries     source_discoveries[]
+  source_runs            source_runs[]
+  source_tags            source_tags[]
+  workflow_runs          workflow_runs?           @relation(fields: [discovered_via_run_id], references: [id], onUpdate: NoAction)
+
+  @@index([last_seen_at(sort: Desc)])
+  @@index([monitoring_mode, confidence(sort: Desc)])
+  @@index([platform, state])
+  @@index([search_document], type: Gin)
+}
+
+model tags {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String             @unique @db.Citext
+  slug             String             @unique
+  color            String?
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  opportunity_tags opportunity_tags[]
+  source_tags      source_tags[]
+}
+
+model workflow_runs {
+  id                                                           String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workflow_key                                                 String
+  workflow_name                                                String?
+  execution_reference                                          String?
+  trigger_type                                                 workflow_trigger_type @default(scheduled)
+  status                                                       workflow_run_status   @default(queued)
+  initiated_by_user_id                                         String?               @db.Uuid
+  started_at                                                   DateTime              @default(now()) @db.Timestamptz(6)
+  finished_at                                                  DateTime?             @db.Timestamptz(6)
+  source_count                                                 Int                   @default(0)
+  item_count_in                                                Int                   @default(0)
+  item_count_out                                               Int                   @default(0)
+  error_count                                                  Int                   @default(0)
+  summary                                                      Json                  @default("{}")
+  error_summary                                                String?
+  created_at                                                   DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at                                                   DateTime              @default(now()) @db.Timestamptz(6)
+  alerts                                                       alerts[]
+  classifications                                              classifications[]
+  opportunities_opportunities_first_seen_run_idToworkflow_runs opportunities[]       @relation("opportunities_first_seen_run_idToworkflow_runs")
+  opportunities_opportunities_last_seen_run_idToworkflow_runs  opportunities[]       @relation("opportunities_last_seen_run_idToworkflow_runs")
+  source_discoveries                                           source_discoveries[]
+  source_runs                                                  source_runs[]
+  sources                                                      sources[]
+  users                                                        User?                 @relation(fields: [initiated_by_user_id], references: [id], onUpdate: NoAction)
+
+  @@index([status, started_at(sort: Desc)])
+  @@index([workflow_key, started_at(sort: Desc)])
+}
+
 enum UserRole {
   owner
   member
@@ -31,58 +380,135 @@ enum AuthProvider {
   google
 }
 
-model User {
-  id                     String          @id @default(uuid())
-  email                  String          @unique
-  displayName            String?         @map("display_name")
-  passwordHash           String?         @map("password_hash")
-  googleId               String?         @unique @map("google_id")
-  provider               AuthProvider    @default(email)
-  role                   UserRole        @default(member)
-  accessStatus           UserAccessStatus @default(pending) @map("access_status")
-  approvedAt             DateTime?       @map("approved_at")
-  approvedByUserId       String?         @map("approved_by_user_id")
-  approvedByUser         User?           @relation("UserApprovals", fields: [approvedByUserId], references: [id])
-  approvedUsers          User[]          @relation("UserApprovals")
-  lastLoginAt            DateTime?       @map("last_login_at")
-  createdAt              DateTime        @default(now()) @map("created_at")
-  updatedAt              DateTime        @updatedAt @map("updated_at")
-  reviewedAccessRequests AccessRequest[] @relation("RequestReviewer")
-  linkedAccessRequests   AccessRequest[] @relation("RequestLinkedUser")
-  passwordResetTokens    PasswordResetToken[]
-
-  @@map("users")
+enum access_request_status {
+  pending
+  approved
+  rejected
+  cancelled
 }
 
-model PasswordResetToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([token])
-  @@map("password_reset_tokens")
+enum alert_channel {
+  telegram
+  notion
+  email
+  slack
+  dashboard
 }
 
-model AccessRequest {
-  id             String              @id @default(uuid())
-  email          String
-  displayName    String?             @map("display_name")
-  message        String?
-  status         AccessRequestStatus @default(pending)
-  requestedAt    DateTime            @default(now()) @map("requested_at")
-  reviewedAt     DateTime?           @map("reviewed_at")
-  reviewerUserId String?             @map("reviewer_user_id")
-  linkedUserId   String?             @map("linked_user_id")
-  decisionNote   String?             @map("decision_note")
-  createdAt      DateTime            @default(now()) @map("created_at")
-  updatedAt      DateTime            @updatedAt @map("updated_at")
-  reviewerUser   User?               @relation("RequestReviewer", fields: [reviewerUserId], references: [id])
-  linkedUser     User?               @relation("RequestLinkedUser", fields: [linkedUserId], references: [id])
+enum alert_status {
+  pending
+  sent
+  failed
+  skipped
+}
 
-  @@index([status, requestedAt(sort: Desc)])
-  @@map("access_requests")
+enum classification_type {
+  rules
+  ai
+  hybrid
+  manual
+}
+
+enum opportunity_intent {
+  unknown
+  job
+  opportunity
+  noise
+}
+
+enum opportunity_routing_action {
+  none
+  review
+  notion
+  telegram
+}
+
+enum opportunity_status {
+  new
+  interesting
+  qualified
+  watch
+  ignored
+  duplicate
+  acted_on
+}
+
+enum review_action {
+  mark_interesting
+  mark_qualified
+  mark_watch
+  mark_ignored
+  mark_duplicate
+  mark_acted_on
+  reopen
+  add_note
+}
+
+enum source_kind {
+  subreddit
+  rss_feed
+  job_board
+  forum
+  tag_page
+  custom
+}
+
+enum source_monitoring_mode {
+  ignored
+  monitored
+  scanned
+  always_scanned
+}
+
+enum source_platform {
+  reddit
+  job_board
+  community
+  directory
+  website
+  custom
+}
+
+enum source_run_kind {
+  discovery_validation
+  monitoring_scan
+  backfill
+  manual
+}
+
+enum source_state {
+  candidate
+  validated
+  evergreen
+  archived
+  disabled
+}
+
+enum user_access_status {
+  pending
+  active
+  suspended
+  rejected
+}
+
+enum user_role {
+  owner
+  member
+}
+
+enum workflow_run_status {
+  queued
+  running
+  succeeded
+  partially_failed
+  failed
+  cancelled
+}
+
+enum workflow_trigger_type {
+  scheduled
+  manual
+  webhook
+  replay
+  test
 }
