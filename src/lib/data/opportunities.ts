@@ -460,7 +460,7 @@ export async function getOpportunityDetail(id: string): Promise<
           u.display_name,
           u.email
         FROM reviews r
-        LEFT JOIN users u ON u.id = r.user_id
+        LEFT JOIN users u ON u.id = r.reviewer.reviewer_user_id
         WHERE r.opportunity_id = $1
         ORDER BY r.created_at DESC
       `,
@@ -541,7 +541,7 @@ export async function getReviewsList() {
           o.title as opportunity_title,
           o.id as opportunity_id
         FROM reviews r
-        LEFT JOIN users u ON u.id = r.user_id
+        LEFT JOIN users u ON u.id = r.reviewer.reviewer_user_id
         LEFT JOIN opportunities o ON o.id = r.opportunity_id
         ORDER BY r.created_at DESC
         LIMIT 50
