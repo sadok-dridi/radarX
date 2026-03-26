@@ -31,7 +31,7 @@ export async function updateOpportunityStatus(opportunityId: string, status: str
 
     // Log the review action
     await pool.query(
-      `INSERT INTO reviews (id, opportunity_id, user_id, from_status, to_status) VALUES ($1, $2, $3, $4, $5)`,
+      `INSERT INTO reviews (id, opportunity_id, reviewer_user_id, from_status, to_status) VALUES ($1, $2, $3, $4, $5)`,
       [randomUUID(), opportunityId, session.user.id, currentStatus, status]
     );
 
@@ -57,7 +57,7 @@ export async function addReviewNote(opportunityId: string, currentStatus: string
   
   try {
     await pool.query(
-      `INSERT INTO reviews (id, opportunity_id, user_id, from_status, to_status, note) VALUES ($1, $2, $3, $4, $5, $6)`,
+      `INSERT INTO reviews (id, opportunity_id, reviewer_user_id, from_status, to_status, note) VALUES ($1, $2, $3, $4, $5, $6)`,
       [randomUUID(), opportunityId, session.user.id, currentStatus, currentStatus, note]
     );
 
