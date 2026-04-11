@@ -9,6 +9,7 @@
     "lint": "node ./node_modules/next/dist/bin/next lint",
     "controller:local-ai": "node ./scripts/local-ai-controller.mjs",
     "worker:local-ai": "node ./scripts/local-ai-worker.mjs",
+    "scraper:linkedin:jobs": "node ./scripts/linkedin-jobs-scraper.mjs",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio"
