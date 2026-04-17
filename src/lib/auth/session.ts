@@ -27,7 +27,7 @@ type SessionPayload = {
 };
 
 function isDevBypassEnabled() {
-  return process.env.DEV_AUTH_BYPASS === "true";
+  return process.env.NODE_ENV !== "production" && process.env.DEV_AUTH_BYPASS === "true";
 }
 
 function getAuthSecret() {

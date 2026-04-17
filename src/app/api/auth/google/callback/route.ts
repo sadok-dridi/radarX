@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
+
 import { googleClient } from "@/lib/auth/google";
 import { getDb } from "@/lib/db";
+import { consumeGoogleOAuthState } from "@/lib/auth/google-state";
 import { createUserSession } from "@/lib/auth/session";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const expectedState = await consumeGoogleOAuthState();
 
-  if (!code) {
+  if (!code || !state || !expectedState || state !== expectedState) {
     return NextResponse.redirect(new URL("/login?error=GoogleAuthFailed", req.url));
   }
 
@@ -26,7 +30,7 @@ export async function GET(req: Request) {
       throw new Error("No payload from Google");
     }
 
-    const { email, sub: googleId, name, picture } = payload;
+    const { email, sub: googleId, name } = payload;
     const db = getDb();
     if (!db) throw new Error("Database not configured");
     
@@ -65,7 +69,7 @@ export async function GET(req: Request) {
       role: user.role,
     });
 
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/app", req.url));
   } catch (err) {
     console.error("Google Auth Error:", err);
     return NextResponse.redirect(new URL("/login?error=GoogleAuthFailed", req.url));
