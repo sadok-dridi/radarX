@@ -1,4 +1,5 @@
 .next/
+.next_old/
 node_modules/
 .env
 .env.local
@@ -10,6 +11,7 @@ node_modules/
 coverage/
 dist/
 build/
+*.tsbuildinfo
 *.log
 prisma/dev.db
 PHASE_01_PRODUCT_BLUEPRINT.md
@@ -23,3 +25,4 @@ LOCAL_LLM_SSH_TUNNEL_SETUP.md
 N8N_OPPORTUNITIES_BRANCH_REBUILD.md
 deploy/
 scripts/
+test-*.js
