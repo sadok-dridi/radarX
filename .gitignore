@@ -24,5 +24,11 @@ LOCAL_AI_WORKER.md
 LOCAL_LLM_SSH_TUNNEL_SETUP.md
 N8N_OPPORTUNITIES_BRANCH_REBUILD.md
 deploy/
+!deploy/
+deploy/*
+!deploy/reddit-radar.env.example
 scripts/
+!scripts/
+scripts/*
+!scripts/reddit-radar-worker.mjs
 test-*.js

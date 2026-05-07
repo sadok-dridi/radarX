@@ -1,0 +1,1697 @@
+{
+  "name": "RadarX",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a1bcfb0f-2407-4e71-8206-91effa9f6c84",
+              "leftValue": "={{ $json.action}}",
+              "rightValue": "telegram",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1728,
+        -1184
+      ],
+      "id": "96e639b0-8069-4323-8080-04e5a9eca7f2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        -1520
+      ],
+      "id": "cb0b2677-b342-42ec-befd-89f973092504",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.reddit.com/subreddits/search.rss?q= {{ $json['[\\'Keyword List\\']'] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            },
+            {
+              "name": "Accept",
+              "value": "application/rss+xml"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 400
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -240,
+        -1312
+      ],
+      "id": "680aa597-fb07-4e15-af69-454fde57c8d1",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const resultsMap = new Map(); \n\n// ---------- helpers ----------\nfunction extract(entry, regex) {\n  const match = entry.match(regex);\n  return match ? match[1].trim() : \"\";\n}\n\nfunction cleanDescription(raw) {\n  if (!raw) return \"\";\n\n  return raw\n    .replace(/&lt;img[\\s\\S]*?&gt;/gi, \"\")\n    .replace(/<img[\\s\\S]*?>/gi, \"\")\n    .replace(/&lt;a[\\s\\S]*?\\[link\\]/gi, \"\")\n    .replace(/<a[\\s\\S]*?\\[link\\]/gi, \"\")\n    .replace(/&lt;[\\s\\S]*?&gt;/g, \"\")\n    .replace(/<[\\s\\S]*?>/g, \"\")\n    .replace(/&amp;/g, \"&\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction extractSubredditFromLink(link) {\n  if (!link || !link.includes(\"/r/\")) return \"\";\n  return link.split(\"/r/\")[1]?.split(\"/\")[0]?.toLowerCase() || \"\";\n}\n\n// ---------- main ----------\nfor (const item of $input.all()) {\n  const xml = item.json.data;\n  if (!xml) continue;\n\n  const entries = xml.match(/<entry>([\\s\\S]*?)<\\/entry>/g) || [];\n\n  for (const entry of entries) {\n    const title = cleanDescription(\n      extract(entry, /<title[^>]*>([\\s\\S]*?)<\\/title>/)\n    );\n\n    const link = extract(entry, /<link[^>]*href=\"([^\"]+)\"/);\n    const updated = extract(entry, /<updated[^>]*>([\\s\\S]*?)<\\/updated>/);\n\n    const description = cleanDescription(\n      extract(entry, /<content[^>]*>([\\s\\S]*?)<\\/content>/)\n    );\n\n    const subreddit = extractSubredditFromLink(link);\n    if (!subreddit) continue;\n\n    const existing = resultsMap.get(subreddit);\n\n    // Decide whether to keep this entry\n    if (!existing) {\n      resultsMap.set(subreddit, {\n        subreddit,\n        title,\n        description,\n        link,\n        updated,\n        source: \"reddit_rss\",\n        parsedAt: new Date().toISOString()\n      });\n    } else {\n      \n      const betterDescription =\n        description.length > (existing.description?.length || 0);\n\n      const newerUpdate =\n        updated && (!existing.updated || updated > existing.updated);\n\n      if (betterDescription || newerUpdate) {\n        resultsMap.set(subreddit, {\n          ...existing,\n          title: title || existing.title,\n          description: description || existing.description,\n          updated: newerUpdate ? updated : existing.updated,\n          parsedAt: new Date().toISOString()\n        });\n      }\n    }\n  }\n}\n\n// ---------- output ----------\nreturn Array.from(resultsMap.values()).map(row => ({\n  json: row\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -1520
+      ],
+      "id": "e0afc00f-d3b9-4fd4-978e-a426af896b30",
+      "name": "Discover"
+    },
+    {
+      "parameters": {
+        "jsCode": "const JOB_KEYWORDS = [\n  \"looking for\",\n  \"need help\",\n  \"need someone\",\n  \"hire\",\n  \"hiring\",\n  \"for hire\",\n  \"paid\",\n  \"budget\",\n  \"quote\",\n  \"rate\",\n  \"contract\",\n  \"freelancer\",\n  \"consultant\",\n  \"agency\",\n  \"outsourcing\"\n];\nconst BUILD_KEYWORDS = [\n  \"build\",\n  \"create\",\n  \"develop\",\n  \"set up\",\n  \"implement\",\n  \"design\",\n  \"custom\",\n  \"automation\",\n  \"workflow\",\n  \"script\",\n  \"api\",\n  \"bot\",\n  \"dashboard\",\n  \"website\",\n  \"landing page\",\n  \"mvp\",\n  \"integration\",\n  \"crm\"\n];\nconst PAIN_KEYWORDS = [\n  \"manual\",\n  \"artist\",\n  \"time-consuming\",\n  \"inefficient\",\n  \"scale\",\n  \"process\",\n  \"messy\",\n  \"spreadsheet\",\n  \"follow up\",\n  \"lead management\",\n  \"reporting\",\n  \"operations\"\n];\n\nconst BAD_KEYWORDS = [\n  \"game\",\n  \"artist\",\n  \"gaming\",\n  \"politics\",\n  \"president\",\n  \"news\",\n  \"memes\",\n  \"entertainment\",\n  \"movie\",\n  \"tv\",\n  \"music\",\n  \"opinion\",\n  \"thoughts\",\n  \"what do you think\",\n  \"discussion only\"\n];\nfunction countMatches(text, keywords) {\n  return keywords.reduce((count, k) => text.includes(k) ? count + 1 : count, 0);\n}\n\nconst MIN_SCORE = 5;\nconst results = [];\n\nfor (const item of $input.all()) {\n  const title = (item.json.title || \"\").toLowerCase();\n  const desc = (item.json.description || \"\").toLowerCase();\n  const link = item.json.link || \"\";\n\n  let score = 0;\n\n \n  score += countMatches(desc, JOB_KEYWORDS) * 5;\n  score += countMatches(desc, BUILD_KEYWORDS) * 3;\n  score += countMatches(desc, PAIN_KEYWORDS) * 2;\n  \n  \n  if (desc.includes(\"script\") || desc.includes(\"api\")) score += 2;\n  if (desc.includes(\"tool\") || desc.includes(\"workflow\")) score += 2;\n\n  \n  score -= countMatches(title, BAD_KEYWORDS) * 4;\n  score -= countMatches(desc, BAD_KEYWORDS) * 3;\n\n  \n  if (desc.length > 120) score += 1;\n  if (link.includes(\"/r/\")) score += 1;\n\n  if (score >= MIN_SCORE) {\n    results.push({\n      json: {\n        subreddit: item.json.subreddit,\n        link,\n        score,\n        category:\n          score >= 10 ? \"🔥 High-value\" :\n          score >= 7 ? \"✅ Good\" :\n          \"⚠️ Medium\"\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -1520
+      ],
+      "id": "e1f7e126-d8b0-45dd-91a1-d775f439caf1",
+      "name": "Scoring",
+      "notes": "const PAIN_KEYWORDS = [\n  \"manual\",\n  \"time-consuming\",\n  \"inefficient\",\n  \"scale\",\n  \"process\",\n  \"messy\",\n  \"spreadsheet\",\n  \"follow up\",\n  \"lead management\",\n  \"reporting\",\n  \"operations\"\n];\nconst BUILD_KEYWORDS = [\n  \"build\",\n  \"create\",\n  \"develop\",\n  \"set up\",\n  \"implement\",\n  \"design\",\n  \"custom\",\n  \"automation\",\n  \"workflow\",\n  \"script\",\n  \"api\",\n  \"bot\",\n  \"dashboard\",\n  \"website\",\n  \"landing page\",\n  \"mvp\",\n  \"integration\",\n  \"crm\"\n];\nconst JOB_KEYWORDS = [\n  \"looking for\",\n  \"need help\",\n  \"need someone\",\n  \"hire\",\n  \"hiring\",\n  \"for hire\",\n  \"paid\",\n  \"budget\",\n  \"quote\",\n  \"rate\",\n  \"contract\",\n  \"freelancer\",\n  \"consultant\",\n  \"agency\",\n  \"outsourcing\"\n];\n"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst results = [];\n\nfor (const item of $input.all()) {\n  const score = item.json.score || 0;\n  const category = item.json.category || \"\";\n  const prevFirstSeen = item.json.first_seen;\n  const prevLastSeen = item.json.last_seen;\n\n  \n  const firstSeen = prevFirstSeen\n    ? new Date(prevFirstSeen)\n    : now;\n\n  const lastSeenPrev = prevLastSeen\n    ? new Date(prevLastSeen)\n    : now;\n\n  const daysSinceLastSeen = Math.floor(\n    (now - lastSeenPrev) / (1000 * 60 * 60 * 24)\n  );\n\n  const weeksAlive = Math.max(\n    1,\n    Math.floor((now - firstSeen) / (1000 * 60 * 60 * 24 * 7))\n  );\n\n  let confidence = score * 10;\n\n  confidence += Math.min(weeksAlive * 5, 30);\n\n  if (category.includes(\"High\")) confidence += 20;\n  else if (category.includes(\"Good\")) confidence += 10;\n\n  if (daysSinceLastSeen > 60) confidence = 0;\n  else if (daysSinceLastSeen > 30) confidence -= 30;\n  else if (daysSinceLastSeen > 7) confidence -= 10;\n\n  confidence = Math.max(0, Math.min(100, confidence));\n\n  let status = \"Candidate\";\n  let action = \"Monitored\";\n\n  if (confidence >= 90) {\n    status = \"Evergreen\";\n    action = \"Always scanned\";\n  } else if (confidence >= 70) {\n    status = \"Validated\";\n    action = \"Scanned\";\n  } else if (confidence >= 30) {\n    status = \"Candidate\";\n    action = \"Monitored\";\n  } else {\n    status = \"Archived\";\n    action = \"Ignored\";\n  }\n\n  results.push({\n    json: {\n      subreddit: item.json.subreddit,\n      link: item.json.link,\n      score,\n      category,\n      confidence,\n      status,\n      action,\n      first_seen: firstSeen.toISOString(),\n      last_seen: now.toISOString()\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -1296
+      ],
+      "id": "7e26d488-f953-42f3-bbf7-4fc199d8c0ca",
+      "name": "Confidence Engine"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "subreddit",
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        464,
+        -1504
+      ],
+      "id": "f71640e2-757e-49c1-9301-1b833f05681e",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -528,
+        -704
+      ],
+      "id": "fbb62c31-1d79-414f-beb7-0953989da380",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "content": "## Subreddit Radar \n[Guide](https://docs.n8n.io/workflows/components/sticky-notes/)",
+        "height": 448,
+        "width": 1264,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -544,
+        -1600
+      ],
+      "typeVersion": 1,
+      "id": "276ccda3-aed7-4438-b4c0-878467a0d608",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31a7d8c1-c08d-4e28-aadb-ada372c04ed2",
+              "name": "Keyword List",
+              "value": "={{ [\n  \"freelance\",\n  \"freelancing\",\n  \"hiring\",\n  \"for hire\",\n  \"jobs\",\n  \"remote jobs\",\n  \"contract work\",\n  \"startup\",\n  \"founders\",\n  \"small business\",\n  \"agency\",\n  \"entrepreneur\",\n  \"automation\",\n  \"workflow\",\n  \"web development\",\n  \"website\",\n  \"online business\",\n  \"upwork\",\n  \"fiverr\",\n  \"freelancer\",\n] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        -1520
+      ],
+      "id": "8890f14b-15dd-49d4-b352-a265edd4575a",
+      "name": "keys",
+      "notesInFlow": false,
+      "notes": "const SUBREDDIT_SEARCH_KEYWORDS = [\n  // core work & jobs\n  \"freelance\",\n  \"freelancing\",\n  \"hiring\",\n  \"for hire\",\n  \"jobs\",\n  \"remote jobs\",\n  \"contract work\",\n\n  // business needs\n  \"startup\",\n  \"founders\",\n  \"small business\",\n  \"agency\",\n  \"entrepreneur\",\n\n  // execution & building\n  \"no-code\",\n  \"low-code\",\n  \"automation\",\n  \"workflow\",\n  \"saas\",\n  \"web development\",\n  \"website\",\n  \"mvp\",\n\n  // side income\n  \"side project\",\n  \"side hustle\",\n  \"online business\",\n\n  // platforms people hire from\n  \"upwork\",\n  \"fiverr\",\n  \"freelancer\",\n  \"consulting\"\n];\n"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "['Keyword List']",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        -1312
+      ],
+      "id": "30047365-0c4a-45b7-9bfc-bdc92e0e9412",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "content": "## Reddit Job Radar\n",
+        "height": 832,
+        "width": 1552
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        -1104
+      ],
+      "typeVersion": 1,
+      "id": "552e71fd-2bd9-413b-aec1-4cebc6182ec8",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===============================\n// CONFIG\n// ===============================\n\nconst HIRING_KEYWORDS = [\n  \"hiring\",\n  \"looking for\",\n  \"need a\",\n  \"need help\",\n  \"seeking\",\n  \"we are hiring\",\n  \"job\",\n  \"position\",\n  \"role\",\n  \"contract\",\n  \"freelancer needed\"\n];\n\nconst MONEY_KEYWORDS = [\n  \"$\",\n  \"usd\",\n  \"salary\",\n  \"budget\",\n  \"paid\",\n  \"payment\",\n  \"rate\",\n  \"/hr\",\n  \"per hour\"\n];\n\nconst SKILL_KEYWORDS = [\n  \"website\",\n  \"web app\",\n  \"landing page\",\n  \"saas\",\n  \"automation\",\n  \"ai\",\n  \"api\",\n  \"bot\",\n  \"scraping\",\n  \"n8n\",\n  \"nocode\",\n  \"dashboard\",\n  \"shopify\",\n  \"wordpress\",\n  \"react\",\n  \"backend\",\n  \"frontend\"\n];\n\n// Soft negatives (self-promo freelancers)\nconst NEGATIVE_KEYWORDS = [\n  \"[for hire]\",\n  \"[available]\",\n  \"commission open\",\n  \"open for work\"\n];\n\n// Hard negatives (never jobs)\nconst HARD_NEGATIVE_PATTERNS = [\n  \"i am looking for\",\n  \"looking for work\",\n  \"need a job\",\n  \"any job\",\n  \"please help me\",\n  \"rant\",\n  \"guide\",\n  \"discussion\",\n  \"experience\",\n  \"my journey\",\n  \"i built\",\n  \"i created\",\n  \"i launched\",\n  \"we built\",\n  \"case study\",\n  \"thoughts on\",\n  \"is it possible\",\n  \"welcome to\",\n  \"announcement\"\n];\n\n// Strong employer-only intent\nconst EMPLOYER_INTENT = [\n  \"[hiring]\",\n  \"we are hiring\",\n  \"we are looking for\",\n  \"looking to hire\",\n  \"need someone to\",\n  \"need a developer\",\n  \"seeking a\",\n  \"position available\",\n  \"job opening\",\n  \"vacancy\",\n  \"contract role\"\n];\n\n// ===============================\n// HELPERS\n// ===============================\n\nfunction hasAny(text, list) {\n  return list.some(w => text.includes(w));\n}\n\nfunction count(text, list) {\n  return list.reduce((n, w) => text.includes(w) ? n + 1 : n, 0);\n}\n\n// ===============================\n// ENGINE\n// ===============================\n\nconst results = [];\n\nfor (const item of $input.all()) {\n\n  const text = (\n    (item.json.text || \"\") +\n    \" \" +\n    (item.json.title || \"\")\n  ).toLowerCase();\n\n  // 1️⃣ HARD KILL — never jobs\n  if (hasAny(text, HARD_NEGATIVE_PATTERNS)) continue;\n\n  // 2️⃣ Reject freelancer self-promo\n  if (hasAny(text, NEGATIVE_KEYWORDS)) continue;\n\n  // 3️⃣ Must show employer intent\n  if (!hasAny(text, EMPLOYER_INTENT)) continue;\n\n  let score = 0;\n\n  // Employer intent is KING\n  score += count(text, EMPLOYER_INTENT) * 40;\n\n  // Payment evidence\n  score += count(text, MONEY_KEYWORDS) * 25;\n\n  // Skill relevance\n  score += count(text, SKILL_KEYWORDS) * 8;\n\n  // Length bonus (real job posts are detailed)\n  if (text.length > 400) score += 10;\n  if (text.length > 800) score += 10;\n\n  // 4️⃣ Classification\n  if (score < 25) continue; // noise\n\n  let action = \"notion\";\n  if (score >= 120) action = \"telegram\";\n\n  results.push({\n    json: {\n      subreddit: item.json.subreddit || \"\",\n      title: item.json.title || \"\",\n      link: item.json.link || \"\",\n      published: item.json.published || \"\",\n      job_score: score,\n      intent: \"job\",\n      action\n    }\n  });\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        -1184
+      ],
+      "id": "fae22af4-7c47-42e4-8a3a-dcc20940f2ed",
+      "name": "Engine"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "04949d01-c9fa-49f5-808d-ca612c07ede7",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "notion",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2016,
+        -1168
+      ],
+      "id": "d4f4a1dd-133b-47f3-9af8-5da461790106",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\n// 🔑 Keywords\nconst HIRING_KEYWORDS = [\n  \"hiring\",\n  \"looking for\",\n  \"need a\",\n  \"need help\",\n  \"seeking\",\n  \"we are hiring\",\n  \"job\",\n  \"position\",\n  \"role\",\n  \"contract\",\n  \"freelancer needed\"\n];\n\nconst MONEY_KEYWORDS = [\n  \"$\",\n  \"usd\",\n  \"salary\",\n  \"budget\",\n  \"paid\",\n  \"payment\",\n  \"rate\",\n  \"/hr\",\n  \"per hour\"\n];\n\nconst SKILL_KEYWORDS = [\n  \"website\",\n  \"web app\",\n  \"landing page\",\n  \"saas\",\n  \"automation\",\n  \"ai\",\n  \"api\",\n  \"bot\",\n  \"scraping\",\n  \"n8n\",\n  \"nocode\",\n  \"dashboard\",\n  \"shopify\",\n  \"wordpress\",\n  \"react\",\n  \"backend\",\n  \"frontend\"\n];\n\nconst NEGATIVE_KEYWORDS = [\n  \"[for hire]\",\n  \"[available]\",\n  \"commission open\",\n  \"open for work\"\n];\n\n// Helpers\nfunction count(text, words) {\n  return words.reduce((n, w) => text.includes(w) ? n + 1 : n, 0);\n}\n\nfor (const item of $input.all()) {\n  const text = item.json.text || \"\";\n  let score = 0;\n\n  // 🚫 Remove self-promotion\n  if (count(text, NEGATIVE_KEYWORDS) > 0) continue;\n\n  // 🎯 Hiring intent\n  score += count(text, HIRING_KEYWORDS) * 30;\n\n  // 💰 Money signal\n  score += count(text, MONEY_KEYWORDS) * 20;\n\n  // 🛠 Skill relevance\n  score += count(text, SKILL_KEYWORDS) * 5;\n\n  // 🧠 Length bonus (real jobs are detailed)\n  if (text.length > 500) score += 10;\n  if (text.length > 1000) score += 10;\n\n  // 🏷 Intent label\n  let intent = \"noise\";\n  if (score >= 50) intent = \"job\";\n\n  // 🎬 Final routing\n  let action = \"ignore\";\n  if (score >= 80) action = \"telegram\";\n  else if (score >= 50) action = \"notion\";\n\n  if (intent === \"job\") {\n    results.push({\n      json: {\n        subreddit: item.json.subreddit,\n        title: item.json.title,\n        link: item.json.link,\n        published: item.json.published,\n        job_score: score,\n        action,\n        intent,\n        text: item.json.text\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        -688
+      ],
+      "id": "a1fc3c8e-7444-4323-a6ba-d477e88047a1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2dea980e-6d2d-4ac7-94a0-ddbc0b995fde",
+              "leftValue": "={{ $json.is_job }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1760,
+        -608
+      ],
+      "id": "9c53c42d-accc-4d5e-a079-5d6c9dde6dee",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all incoming items\nconst inputItems = $input.all();\n\n// Process and clean\nconst results = inputItems\n  .map((item, index) => {\n    try {\n      const parsed = JSON.parse(item.json.output);\n\n      return {\n        json: {\n          id: index + 1,\n          is_job: Boolean(parsed.is_job),\n          confidence: Number(parsed.confidence ?? 0),\n          reason: parsed.reason?.trim() || \"\",\n          link: parsed.link?.trim() || null\n        }\n      };\n    } catch (error) {\n      // Skip invalid AI outputs safely\n      return null;\n    }\n  })\n  .filter(Boolean);\n\n// IMPORTANT: return array of items\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        -1024
+      ],
+      "id": "3deecdc6-9adf-488a-ba2a-930710304776",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1eZCRVthfapKdr9Dgz9hn3dMLNiIkH8ulDKZGU8Dvp8c/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "JobRadar",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1eZCRVthfapKdr9Dgz9hn3dMLNiIkH8ulDKZGU8Dvp8c/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "link": "={{ $json.link }}",
+            "subreddit": "={{ $json.subreddit }}",
+            "title": "={{ $json.title }}",
+            "intent": "={{ $json.intent }}",
+            "action": "={{ $json.action }}",
+            "is_job": "={{ $json.is_job }}",
+            "job_score": "={{ $json.job_score }}",
+            "reason": "={{ $json.reason }}",
+            "published": "={{ $json.published }}"
+          },
+          "matchingColumns": [
+            "link"
+          ],
+          "schema": [
+            {
+              "id": "subreddit",
+              "displayName": "subreddit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "is_job",
+              "displayName": "is_job",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "job_score",
+              "displayName": "job_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "published",
+              "displayName": "published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2064,
+        -848
+      ],
+      "id": "0baff649-eb1a-4cef-8a7b-560004ef5226",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "mesGdlqAKTSuoqjF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "link",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2176,
+        -1008
+      ],
+      "id": "89ca1734-3e30-48b9-b1c6-97bc2b6e1601",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2128,
+        -592
+      ],
+      "id": "301fa890-471a-4c27-b302-f73d0337dde4",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sources (\n  platform,\n  kind,\n  normalized_key,\n  name,\n  slug,\n  external_id,\n  canonical_url,\n  feed_url,\n  state,\n  monitoring_mode,\n  relevance_score,\n  confidence,\n  discovered_by_query,\n  first_seen_at,\n  last_seen_at,\n  last_scanned_at,\n  last_successful_run_at,\n  source_metadata\n)\nVALUES (\n  'reddit',\n  'subreddit',\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  CASE\n    WHEN LOWER($7) = 'evergreen' THEN 'evergreen'::source_state\n    WHEN LOWER($7) = 'validated' THEN 'validated'::source_state\n    WHEN LOWER($7) = 'archived' THEN 'archived'::source_state\n    ELSE 'candidate'::source_state\n  END,\n  CASE\n    WHEN LOWER($8) = 'always scanned' THEN 'always_scanned'::source_monitoring_mode\n    WHEN LOWER($8) = 'scanned' THEN 'scanned'::source_monitoring_mode\n    WHEN LOWER($8) = 'ignored' THEN 'ignored'::source_monitoring_mode\n    ELSE 'monitored'::source_monitoring_mode\n  END,\n  $9,\n  $10,\n  $11,\n  COALESCE($12::timestamptz, now()),\n  COALESCE($13::timestamptz, now()),\n  now(),\n  now(),\n  $14::jsonb\n)\nON CONFLICT (normalized_key)\nDO UPDATE SET\n  name = EXCLUDED.name,\n  slug = EXCLUDED.slug,\n  external_id = EXCLUDED.external_id,\n  canonical_url = EXCLUDED.canonical_url,\n  feed_url = EXCLUDED.feed_url,\n  state = EXCLUDED.state,\n  monitoring_mode = EXCLUDED.monitoring_mode,\n  relevance_score = EXCLUDED.relevance_score,\n  confidence = EXCLUDED.confidence,\n  discovered_by_query = COALESCE(EXCLUDED.discovered_by_query, sources.discovered_by_query),\n  last_seen_at = EXCLUDED.last_seen_at,\n  last_scanned_at = now(),\n  last_successful_run_at = now(),\n  source_metadata = EXCLUDED.source_metadata\nRETURNING id, normalized_key;",
+        "options": {
+          "queryReplacement": "={{ 'reddit:subreddit:' + $json.subreddit.toLowerCase() }},{{ 'r/' + $json.subreddit }},{{ $json.subreddit.toLowerCase() }},{{ $json.subreddit.toLowerCase() }},{{ $json.link || null }},{{ $json.link ? $json.link + '.rss' : null }},{{ $json.status || 'Candidate' }},{{ $json.action || 'Monitored' }},{{ Number($json.score || 0) }},{{ Number($json.confidence || 0) }},{{ $json['Keyword List'] || null }},{{ $json.first_seen || null }},{{ $json.last_seen || null }},{{ JSON.stringify($json) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        544,
+        -1296
+      ],
+      "id": "be81e92f-c21d-4e0a-bea1-45fac16d0a3d",
+      "name": "Upsert Source",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "glm-4.5",
+          "mode": "list",
+          "cachedResultName": "glm-4.5"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 700
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1648,
+        -1392
+      ],
+      "id": "750312c6-4055-49e2-adc8-d4dc0ccae03a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gbUxwAbunOyVCy8l",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  id,\n  COALESCE(NULLIF(slug, ''), NULLIF(external_id, ''), regexp_replace(name, '^r/', '', 'i')) AS subreddit,\n  confidence,\n  monitoring_mode,\n  last_scanned_at\nFROM sources\nWHERE platform = 'reddit'\n  AND is_active = true\n  AND state IN ('validated', 'evergreen')\n  AND monitoring_mode IN ('scanned', 'always_scanned')\nORDER BY\n  CASE WHEN monitoring_mode = 'always_scanned' THEN 0 ELSE 1 END,\n  confidence DESC,\n  last_scanned_at NULLS FIRST;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -544,
+        -1024
+      ],
+      "id": "b34ecd3e-8ee4-4355-aa58-702bd09d1965",
+      "name": "Load Active Sources",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const CHUNK_SIZE = 4;\nconst DEFAULT_LIMIT = 50;\n\nfunction hoursSince(timestamp) {\n  if (!timestamp) return Infinity;\n  const diffMs = Date.now() - new Date(timestamp).getTime();\n  return diffMs / (1000 * 60 * 60);\n}\n\nconst sources = $input\n  .all()\n  .map((item) => item.json)\n  .filter((item) => item.subreddit)\n  .map((item) => ({\n    ...item,\n    subreddit: String(item.subreddit).trim().toLowerCase(),\n  }));\n\nconst selected = sources.filter((source) => {\n  if (source.monitoring_mode === 'always_scanned') return true;\n  return hoursSince(source.last_scanned_at) >= 6;\n});\n\nconst unique = Array.from(\n  new Map(selected.map((item) => [item.subreddit, item])).values()\n);\n\nif (!unique.length) {\n  return [];\n}\n\nconst chunks = [];\nfor (let i = 0; i < unique.length; i += CHUNK_SIZE) {\n  const chunk = unique.slice(i, i + CHUNK_SIZE);\n  const joined = chunk.map((item) => item.subreddit).join('+');\n\n  chunks.push({\n    json: {\n      chunk_index: chunks.length + 1,\n      subreddits: chunk.map((item) => item.subreddit),\n      source_ids: chunk.map((item) => item.id),\n      url: `https://www.reddit.com/r/${joined}/new/.rss`,\n    },\n  });\n}\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        -1024
+      ],
+      "id": "502a67cb-877d-4a14-91b4-ea0e9714404e",
+      "name": "Build Scan Plan"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.reddit.com/r/fiverrguide+hiringpakistan+nycjobs+aistartupautomation+financeautomation+launchmystartup+cofounderhunt+freelancenl/new/.rss",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 "
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -288,
+        -640
+      ],
+      "id": "146b4df8-c8de-4abc-b402-b1b2e3070b21",
+      "name": "Fetch Reddit Chunks",
+      "retryOnFail": false,
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "maxTries": null
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\n\nfunction decodeHtml(html) {\n  return html\n    .replace(/&lt;/g, \"<\")\n    .replace(/&gt;/g, \">\")\n    .replace(/&amp;/g, \"&\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#32;/g, \" \")\n    .replace(/&#39;/g, \"'\");\n}\nfunction cleanString(str) {\n  if (!str) return str;\n\n  return str\n    .replace(/[\\uD800-\\uDFFF]/g, '') \n    .replace(/\\u0000/g, '')          \n    .replace(/[^\\x09\\x0A\\x0D\\x20-\\x7E]/g, ''); \n}\n\nfor (const item of $input.all()) {\n  const xml = item.json.data;\n\n  const entries = [...xml.matchAll(/<entry>([\\s\\S]*?)<\\/entry>/g)];\n\n  for (const match of entries) {\n    const entry = match[1];\n\n    const title = (entry.match(/<title>(.*?)<\\/title>/) || [])[1] || \"\";\n    const url = (entry.match(/<link href=\"(.*?)\"/) || [])[1] || \"\";\n    const author = (entry.match(/<name>(.*?)<\\/name>/) || [])[1] || \"\";\n    const subreddit = (entry.match(/label=\"r\\/(.*?)\"/) || [])[1] || \"\";\n    const published = (entry.match(/<published>(.*?)<\\/published>/) || [])[1] || \"\";\n\n    const rawContent = (entry.match(/<content[^>]*>([\\s\\S]*?)<\\/content>/) || [])[1] || \"\";\n    const content = cleanString(\n  decodeHtml(rawContent).replace(/<[^>]+>/g, \"\").trim()\n);\n\n    if (!title || !url) continue;\n\n    out.push({\n      json: {\n        source_normalized_key: `reddit:subreddit:${subreddit.toLowerCase()}`,\n        source_record_key: url,\n        canonical_url: url,\n        source_native_id: url.split(\"/comments/\")[1]?.split(\"/\")[0] || null,\n        subreddit,\n        title: cleanString(title),\n        content,\n        text: `${title}\\n\\n${content}`.trim(),\n        author_name: author.replace(\"/u/\", \"\"),\n        published_at: published,\n        ups: 0,\n        num_comments: 0,\n        over_18: false,\n        raw_payload: cleanString(entry),\n      },\n    });\n  }\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -640
+      ],
+      "id": "0622847f-1c32-45d8-be60-a33788f826ef",
+      "name": "Normalize Posts",
+      "retryOnFail": false,
+      "maxTries": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const seen = new Set();\nconst out = [];\n\nfor (const item of $input.all()) {\n  const key = item.json.source_record_key;\n  if (!key || seen.has(key)) continue;\n  seen.add(key);\n  out.push(item);\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        -1008
+      ],
+      "id": "897cba91-4a6a-4ab2-9df5-dfa7b45b112c",
+      "name": "Deduplicate In Run"
+    },
+    {
+      "parameters": {
+        "jsCode": "const posts = $input.all().map((item) => item.json);\n\nif (!posts.length) {\n  return [];\n}\n\nreturn [\n  {\n    json: {\n      posts,\n      sourceRecordKeys: posts.map((post) => post.source_record_key),\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -1008
+      ],
+      "id": "66a07ea6-cdd0-4f35-9082-5bba12092e27",
+      "name": "Pack Posts For Lookup"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH incoming AS (\n  SELECT jsonb_array_elements_text($1::jsonb) AS source_record_key\n),\nmatches AS (\n  SELECT o.source_record_key\n  FROM opportunities o\n  JOIN incoming i ON i.source_record_key = o.source_record_key\n)\nSELECT\n  $2::jsonb AS posts,\n  COALESCE((SELECT jsonb_agg(source_record_key) FROM matches), '[]'::jsonb) AS existing_keys;",
+        "options": {
+          "queryReplacement": "{{ JSON.stringify($json.sourceRecordKeys) }},{{ JSON.stringify($json.posts) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -64,
+        -800
+      ],
+      "id": "5ff8b903-edd3-466d-a018-28b35e10998b",
+      "name": "Lookup Existing Opportunities",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\n\nconst posts = Array.isArray(row.posts) ? row.posts : JSON.parse(row.posts || '[]');\nconst existingKeysArray = Array.isArray(row.existing_keys)\n  ? row.existing_keys\n  : JSON.parse(row.existing_keys || '[]');\n\nconst existingKeys = new Set(existingKeysArray.map((value) => String(value)));\n\nconst EMPLOYER_KEYWORDS = [\n  'we are hiring',\n  'looking to hire',\n  'need someone to',\n  'need a developer',\n  'seeking a',\n  'job opening',\n  'position available',\n  'contract role',\n  '[hiring]',\n  'hiring',\n];\n\nconst MONEY_KEYWORDS = [\n  '$',\n  'usd',\n  'budget',\n  'paid',\n  'salary',\n  'rate',\n  '/hr',\n  'per hour',\n  'payment',\n];\n\nconst DELIVERY_KEYWORDS = [\n  'build',\n  'develop',\n  'create',\n  'automation',\n  'workflow',\n  'api',\n  'bot',\n  'dashboard',\n  'landing page',\n  'website',\n  'mvp',\n  'integration',\n  'scraping',\n  'n8n',\n];\n\nconst URGENCY_KEYWORDS = [\n  'asap',\n  'urgent',\n  'immediately',\n  'this week',\n  'right away',\n  'soon',\n];\n\nconst SELF_PROMO_KEYWORDS = [\n  '[for hire]',\n  '[available]',\n  'open for work',\n  'commission open',\n  'looking for work',\n  'available for work',\n];\n\nconst HARD_NEGATIVES = [\n  'i am looking for',\n  'need a job',\n  'my journey',\n  'case study',\n  'guide',\n  'discussion',\n  'rant',\n  'showcase',\n  'i built',\n  'we built',\n  'i launched',\n  'thoughts on',\n  'is it possible',\n];\n\nfunction countMatches(text, words) {\n  return words.reduce((total, word) => total + (text.includes(word) ? 1 : 0), 0);\n}\n\nconst out = [];\n\nfor (const post of posts) {\n  if (existingKeys.has(post.source_record_key)) {\n    continue;\n  }\n\n  const text = `${post.title || ''} ${post.content || ''}`.toLowerCase();\n\n  if (!text.trim()) continue;\n  if (post.over_18) continue;\n  if (countMatches(text, HARD_NEGATIVES) > 0) continue;\n  if (countMatches(text, SELF_PROMO_KEYWORDS) > 0) continue;\n  if (text.length < 80) continue;\n\n  const employerHits = countMatches(text, EMPLOYER_KEYWORDS);\n  const moneyHits = countMatches(text, MONEY_KEYWORDS);\n  const deliveryHits = countMatches(text, DELIVERY_KEYWORDS);\n  const urgencyHits = countMatches(text, URGENCY_KEYWORDS);\n\n  if (employerHits === 0) continue;\n\n  let score = 0;\n  score += employerHits * 35;\n  score += moneyHits * 22;\n  score += deliveryHits * 8;\n  score += urgencyHits * 6;\n\n  if (text.length > 400) score += 8;\n  if (text.length > 800) score += 10;\n  if ((post.num_comments || 0) >= 5) score += 4;\n  if ((post.ups || 0) >= 10) score += 4;\n\n  if (score < 80) {\n    continue;\n  }\n\n  let decision = 'needs_ai';\n  let confidence = Math.min(82, 40 + Math.floor(score / 3));\n  let routing_action = 'review';\n\n  const strongEmployer = employerHits >= 2;\n  const strongCommercialSignal = moneyHits >= 1 || deliveryHits >= 3;\n\n  if (score >= 130 && strongEmployer && strongCommercialSignal) {\n    decision = 'direct_accept';\n    confidence = Math.min(96, 58 + Math.floor(score / 2.5));\n  }\n\n  if (score >= 150) {\n    routing_action = 'telegram';\n  }\n\n  out.push({\n    json: {\n      ...post,\n      intent: 'job',\n      job_score: score,\n      decision,\n      needs_ai: decision === 'needs_ai',\n      routing_action,\n      confidence,\n      heuristic_reason: `employer:${employerHits}, money:${moneyHits}, delivery:${deliveryHits}, urgency:${urgencyHits}`,\n      ai_input_text: `${post.title || ''}\\n\\n${post.content || ''}`.slice(0, 950),\n    },\n  });\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        -800
+      ],
+      "id": "238b4eec-dc8d-434f-a76e-2a078966a81b",
+      "name": "Filter Unseen + Score"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "direct_accept",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "0485ec7e-948b-449f-8e41-730c60ffefbb"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "934c18a3-8f49-46c2-b24c-80ec4b5eaf8b",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "needs_ai",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        -800
+      ],
+      "id": "e1b85a3a-6500-4032-b3a5-af80717a141e",
+      "name": "Route Decision`",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const MAX_AI_ITEMS_PER_RUN = 24;\nconst BATCH_SIZE = 6;\n\nconst sorted = $input\n  .all()\n  .map((item) => item.json)\n  .sort((a, b) => (b.job_score || 0) - (a.job_score || 0))\n  .slice(0, MAX_AI_ITEMS_PER_RUN);\n\nconst out = [];\n\nfor (let i = 0; i < sorted.length; i += BATCH_SIZE) {\n  const chunk = sorted.slice(i, i + BATCH_SIZE);\n\n  out.push({\n    json: {\n      batch_index: out.length + 1,\n      jobs: chunk.map((item) => ({\n        id: item.source_record_key,\n        subreddit: item.subreddit,\n        title: item.title,\n        link: item.canonical_url,\n        text: item.ai_input_text,\n        heuristic_score: item.job_score,\n      })),\n      originals: chunk,\n    },\n  });\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -560
+      ],
+      "id": "bdcdce98-2343-44dc-8f0d-266869acbbc7",
+      "name": "Batch AI Candidates",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Classify the following post.\n\ntext:\n{{ JSON.stringify($json.jobs) }}\n\n",
+        "options": {
+          "systemMessage": "=You are a strict classifier of Reddit posts.\n\nTask:\nFor each object in the input array, decide whether it is a real paid employer-side opportunity.\n\nRules:\n- Accept only real employer/client requests.\n- Reject freelancer self-promotion.\n- Reject discussions, guides, showcases, announcements, and vague speculation.\n- Reject unpaid or unclear requests.\n- Keep the response short and strict.\n\nReturn ONLY valid JSON.\nReturn exactly one result per input item.\n\nSchema:\n[\n  {\n    \"id\": \"string\",\n    \"is_job\": true,\n    \"confidence\": 0,\n    \"reason\": \"short explanation\"\n  }\n]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1648,
+        -1600
+      ],
+      "id": "ff1f5d49-9bc9-45fb-a9ed-696e87d7de11",
+      "name": "AI Batch Classifier",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH payload AS (\n  SELECT jsonb_array_elements($1::jsonb) AS item\n),\nupserted AS (\n  INSERT INTO opportunities (\n    source_id,\n    platform,\n    source_record_key,\n    content_fingerprint,\n    source_native_id,\n    canonical_url,\n    title,\n    content,\n    author_name,\n    published_at,\n    first_seen_at,\n    last_seen_at,\n    score,\n    confidence,\n    status,\n    routing_action,\n    intent,\n    is_job,\n    ai_reason,\n    extracted_entities,\n    raw_payload\n  )\n  SELECT\n    (\n      SELECT s.id\n      FROM sources s\n      WHERE s.normalized_key = item->>'source_normalized_key'\n      LIMIT 1\n    ),\n    'reddit',\n    item->>'source_record_key',\n    md5(COALESCE(item->>'title', '') || '|' || COALESCE(item->>'text', '')),\n    NULLIF(item->>'source_native_id', ''),\n    item->>'canonical_url',\n    item->>'title',\n    COALESCE(item->>'content', ''),\n    NULLIF(item->>'author_name', ''),\n    CASE WHEN NULLIF(item->>'published_at', '') IS NULL THEN NULL ELSE (item->>'published_at')::timestamptz END,\n    now(),\n    now(),\n    COALESCE((item->>'job_score')::int, 0),\n    COALESCE((item->>'confidence')::int, 0),\n    'new',\n    CASE WHEN LOWER(COALESCE(item->>'routing_action', 'review')) = 'telegram' THEN 'telegram'::opportunity_routing_action ELSE 'review'::opportunity_routing_action END,\n    'job',\n    NULL,\n    COALESCE(item->>'heuristic_reason', NULL),\n    '{}'::jsonb,\n    COALESCE(item->'raw_payload', '{}'::jsonb)\n  FROM payload\n  ON CONFLICT (source_record_key)\n  DO UPDATE SET\n    last_seen_at = now(),\n    score = GREATEST(opportunities.score, EXCLUDED.score),\n    confidence = GREATEST(opportunities.confidence, EXCLUDED.confidence),\n    routing_action = EXCLUDED.routing_action,\n    ai_reason = COALESCE(opportunities.ai_reason, EXCLUDED.ai_reason),\n    raw_payload = EXCLUDED.raw_payload\n  RETURNING id, source_record_key\n)\nINSERT INTO ai_tasks (\n  opportunity_id,\n  status,\n  provider_preference,\n  priority,\n  payload\n)\nSELECT\n  u.id,\n  'pending',\n  'local',\n  100,\n  p.item\nFROM upserted u\nJOIN payload p ON p.item->>'source_record_key' = u.source_record_key\nON CONFLICT DO NOTHING\nRETURNING opportunity_id;",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($json.originals || []) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        720,
+        -560
+      ],
+      "id": "70476edb-fc1f-45c9-b739-2feadea84eb9",
+      "name": "Enqueue AI Tasks",
+      "executeOnce": false,
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1520,
+        -816
+      ],
+      "id": "76b328f2-7777-4a07-9f5b-affadbda9c61",
+      "name": "Merge Final Candidates"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO opportunities (\n  source_id,\n  platform,\n  source_record_key,\n  content_fingerprint,\n  source_native_id,\n  canonical_url,\n  title,\n  content,\n  author_name,\n  published_at,\n  first_seen_at,\n  last_seen_at,\n  score,\n  confidence,\n  status,\n  routing_action,\n  intent,\n  is_job,\n  ai_reason,\n  extracted_entities,\n  raw_payload\n)\nVALUES (\n  (\n    SELECT id\n    FROM sources\n    WHERE normalized_key = $1\n    LIMIT 1\n  ),\n  'reddit',\n  $2,\n  md5(COALESCE($3, '') || '|' || COALESCE($4, '')),\n  $5,\n  $6,\n  $7,\n  $8,\n  $9,\n  COALESCE($10::timestamptz, now()),\n  now(),\n  now(),\n  $11,\n  $12,\n  'new',\n  CASE\n    WHEN LOWER($13) = 'telegram' THEN 'telegram'::opportunity_routing_action\n    ELSE 'review'::opportunity_routing_action\n  END,\n  'job',\n  true,\n  $14,\n  '{}'::jsonb,\n  $15::jsonb\n)\nON CONFLICT (source_record_key)\nDO UPDATE SET\n  last_seen_at = now(),\n  score = GREATEST(opportunities.score, EXCLUDED.score),\n  confidence = GREATEST(opportunities.confidence, EXCLUDED.confidence),\n  routing_action = EXCLUDED.routing_action,\n  ai_reason = COALESCE(EXCLUDED.ai_reason, opportunities.ai_reason),\n  raw_payload = EXCLUDED.raw_payload\nRETURNING id, source_record_key, routing_action;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.source_normalized_key ?? '',\n  $json.source_record_key ?? '',\n  $json.title ?? '',\n  $json.text ?? '',\n  $json.source_native_id ?? null,\n  $json.canonical_url ?? '',\n  $json.title ?? '',\n  $json.content ?? '',\n  $json.author_name ?? '',\n  $json.published_at ? new Date($json.published_at).toISOString() : new Date().toISOString(),\n  Number($json.job_score ?? 0),\n  Number($json.confidence ?? 0),\n  $json.routing_action ?? 'review',\n  $json.ai_reason ?? $json.heuristic_reason ?? '',\n  JSON.stringify($json ?? {})\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        544,
+        -816
+      ],
+      "id": "2fe2bd66-e201-430d-a3e5-435696f8b18f",
+      "name": "Upsert Opportunities",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2af46814-eaf9-41d7-9f9d-a0473fee76ef",
+              "leftValue": "={{ $json.routing_action }}",
+              "rightValue": "telegram",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        -976
+      ],
+      "id": "14845b8a-afd5-47de-9485-74cc5025654e",
+      "name": "if telegram"
+    },
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1584,
+        -1008
+      ],
+      "id": "bd90cb03-fc9c-4b0f-b14b-e914d2527755",
+      "name": "Send a text message",
+      "webhookId": "aa89f068-5df2-43d0-a525-aa2be09cc294",
+      "credentials": {
+        "telegramApi": {
+          "id": "YC4E4fkzuB9IeW6c",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function sanitizeString(input = \"\") {\n  let output = \"\";\n  for (let i = 0; i < input.length; i++) {\n    const code = input.charCodeAt(i);\n    // high surrogate\n    if (code >= 0xd800 && code <= 0xdbff) {\n      const next = input.charCodeAt(i + 1);\n      // valid surrogate pair\n      if (next >= 0xdc00 && next <= 0xdfff) {\n        output += input[i] + input[i + 1];\n        i++;\n      }\n      // invalid high surrogate alone -> skip\n      continue;\n    }\n    // invalid low surrogate alone -> skip\n    if (code >= 0xdc00 && code <= 0xdfff) {\n      continue;\n    }\n    output += input[i];\n  }\n  return output;\n}\nfunction sanitizeValue(value) {\n  if (typeof value === \"string\") {\n    return sanitizeString(value);\n  }\n  if (Array.isArray(value)) {\n    return value.map(sanitizeValue);\n  }\n  if (value && typeof value === \"object\") {\n    const out = {};\n    for (const [key, val] of Object.entries(value)) {\n      out[key] = sanitizeValue(val);\n    }\n    return out;\n  }\n  return value;\n}\nreturn $input.all().map((item) => ({\n  json: {\n    ...item.json,\n    originals: sanitizeValue(item.json.originals || []),\n    jobs: sanitizeValue(item.json.jobs || []),\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -560
+      ],
+      "id": "a6837862-19ff-4e8b-afd8-25dcaf219941",
+      "name": "Sanitize AI Queue Payload",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        -416
+      ],
+      "id": "f0db3a37-bbe3-4de0-9011-b0062fd928f4",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_runs (workflow_key, workflow_name, status, error_summary, started_at, updated_at)\n     VALUES ($1, $2, 'failed', $3, NOW(), NOW())",
+        "options": {
+          "queryReplacement": "={{ $json.workflow.id }} ,{{ $json.workflow.name }} ,{{ $json.execution.error.message }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -384,
+        -416
+      ],
+      "id": "d787e239-dc99-423d-964c-65776ecd8afc",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## LinkedIn\n\n",
+        "height": 688,
+        "width": 1536,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2192,
+        -992
+      ],
+      "typeVersion": 1,
+      "id": "6539bf70-c8f1-4bda-b28a-1496077c4835",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "linkedin-jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1968,
+        -880
+      ],
+      "id": "c0361688-3b1f-4e19-b24f-61e05833a331",
+      "name": "Webhook",
+      "webhookId": "84960ade-5d78-4b0a-bc1d-b6e7e4c4493d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? {};\nconst jobs = Array.isArray(body.jobs) ? body.jobs : [];\nreturn jobs.map((job) => ({\n  json: {\n    source: body.source,\n    fetched_at: body.fetched_at,\n    webhook_context: body.context,\n    ...job,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        -880
+      ],
+      "id": "ebe065af-5537-477a-b6b0-55c6ac3d29b2",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const seen = new Set();\nconst out = [];\nfor (const item of $input.all()) {\n  const key = item.json.source_record_key;\n  if (!key || seen.has(key)) continue;\n  seen.add(key);\n  out.push(item);\n}\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1552,
+        -880
+      ],
+      "id": "91e329de-3b4c-467f-8af1-14a95dc5048f",
+      "name": "Deduplicate In Run - LinkedIn"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = $input.all().map((item) => item.json);\nif (!jobs.length) {\n  return [];\n}\nreturn [\n  {\n    json: {\n      jobs,\n      sourceRecordKeys: jobs.map((job) => job.source_record_key),\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        -880
+      ],
+      "id": "0db0f2a4-6ec3-4b76-9059-bc61e0da1044",
+      "name": "Pack Jobs For Lookup - LinkedIn"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst jobs = Array.isArray(row.jobs) ? row.jobs : JSON.parse(row.jobs || '[]');\nconst existingKeysArray = Array.isArray(row.existing_keys)\n  ? row.existing_keys\n  : JSON.parse(row.existing_keys || '[]');\nconst existingKeys = new Set(existingKeysArray.map((v) => String(v)));\nconst out = [];\nfor (const job of jobs) {\n  if (!job.source_record_key) continue;\n  if (existingKeys.has(job.source_record_key)) continue;\n  const confidence = Number(job.confidence || 0);\n  const score = Number(job.score || 0);\n  const flags = Array.isArray(job.validation_flags) ? job.validation_flags : [];\n  const parseQuality = job.parse_quality || 'weak';\n  if (parseQuality === 'weak') continue;\n  if (flags.includes('location_mismatch')) continue;\n  let decision = 'ignore';\n  let routing_action = job.routing_action || 'review';\n  if (confidence >= 85 || score >= 80) {\n    decision = 'direct_accept';\n  } else if (confidence >= 65 || score >= 60) {\n    decision = 'needs_ai';\n  } else {\n    decision = 'ignore';\n  }\n  out.push({\n    json: {\n      ...job,\n      decision,\n      routing_action,\n      job_score: score,\n      first_seen_at: new Date().toISOString(),\n      last_seen_at: new Date().toISOString(),\n      ai_input_text: [\n        `Title: ${job.title || ''}`,\n        `Company: ${job.company || ''}`,\n        `Location: ${job.location_text || ''}`,\n        `Employment: ${job.employment_type || ''}`,\n        `Seniority: ${job.seniority_level || ''}`,\n        `Content: ${job.content || ''}`,\n      ].join('\\n'),\n    },\n  });\n}\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1792,
+        -672
+      ],
+      "id": "53b2a2de-6607-4b2f-a6a2-ab0b559a8333",
+      "name": "Filter Unseen + Route - LinkedIn"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "direct_accept",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "55d33fe3-d50a-45ef-abaa-b42de577da3d"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "59f180d6-e066-421a-a3b0-634c47df6fa5",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "needs_ai",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1680,
+        -272
+      ],
+      "id": "068a4ee8-a8eb-454e-a071-e53db8c1c5d7",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sources (\n  platform,\n  kind,\n  normalized_key,\n  name,\n  slug,\n  external_id,\n  canonical_url,\n  state,\n  monitoring_mode,\n  relevance_score,\n  confidence,\n  discovered_by_query,\n  first_seen_at,\n  last_seen_at,\n  last_scanned_at,\n  last_successful_run_at,\n  source_metadata\n)\nVALUES (\n  'job_board',\n  'job_board',\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  'validated'::source_state,\n  'scanned'::source_monitoring_mode,\n  $6,\n  $7,\n  $8,\n  now(),\n  now(),\n  now(),\n  now(),\n  $9::jsonb\n)\nON CONFLICT (normalized_key)\nDO UPDATE SET\n  name = EXCLUDED.name,\n  slug = EXCLUDED.slug,\n  external_id = EXCLUDED.external_id,\n  canonical_url = EXCLUDED.canonical_url,\n  relevance_score = EXCLUDED.relevance_score,\n  confidence = EXCLUDED.confidence,\n  discovered_by_query = COALESCE(EXCLUDED.discovered_by_query, sources.discovered_by_query),\n  last_seen_at = now(),\n  last_scanned_at = now(),\n  last_successful_run_at = now(),\n  source_metadata = EXCLUDED.source_metadata\nRETURNING id, normalized_key;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.source_normalized_key ?? '',\n  $json.source_name ?? 'LinkedIn Jobs',\n  $json.source_name ?? 'linkedin-jobs',\n  $json.source_native_id ?? null,\n  $json.source_canonical_url ?? $json.canonical_url ?? '',\n  Number($json.job_score ?? 0),\n  Number($json.confidence ?? 0),\n  (($json.webhook_context?.keywords || []).join(' | ')) + ' @ ' + (($json.webhook_context?.locations || []).join(' | ')),\n  JSON.stringify($json ?? {})\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1792,
+        -496
+      ],
+      "id": "9526cac8-948f-465a-a88b-b4684fa5ed2d",
+      "name": "Upsert LinkedIn Source",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO opportunities (\n  source_id,\n  platform,\n  source_record_key,\n  content_fingerprint,\n  source_native_id,\n  canonical_url,\n  title,\n  content,\n  author_name,\n  published_at,\n  first_seen_at,\n  last_seen_at,\n  score,\n  confidence,\n  status,\n  routing_action,\n  intent,\n  is_job,\n  ai_reason,\n  extracted_entities,\n  raw_payload\n)\nVALUES (\n  (\n    SELECT id\n    FROM sources\n    WHERE normalized_key = $1\n    LIMIT 1\n  ),\n  'job_board',\n  $2,\n  md5(COALESCE($3, '') || '|' || COALESCE($4, '')),\n  $5,\n  $6,\n  $7,\n  $8,\n  $9,\n  CASE WHEN NULLIF($10, '') IS NULL THEN now() ELSE $10::timestamptz END,\n  now(),\n  now(),\n  $11,\n  $12,\n  'new',\n  CASE\n    WHEN LOWER($13) = 'telegram' THEN 'telegram'::opportunity_routing_action\n    ELSE 'review'::opportunity_routing_action\n  END,\n  'job',\n  true,\n  $14,\n  $15::jsonb,\n  $16::jsonb\n)\nON CONFLICT (source_record_key)\nDO UPDATE SET\n  last_seen_at = now(),\n  score = GREATEST(opportunities.score, EXCLUDED.score),\n  confidence = GREATEST(opportunities.confidence, EXCLUDED.confidence),\n  routing_action = EXCLUDED.routing_action,\n  ai_reason = COALESCE(EXCLUDED.ai_reason, opportunities.ai_reason),\n  extracted_entities = EXCLUDED.extracted_entities,\n  raw_payload = EXCLUDED.raw_payload\nRETURNING id, source_record_key, routing_action;",
+        "options": {
+          "queryReplacement": "={{ [   $json.source_normalized_key ?? '',   $json.source_record_key ?? '',   $json.title ?? '',   $json.content ?? '',   $json.source_native_id ?? null,   $json.canonical_url ?? '',   $json.title ?? '',   $json.content ?? '',   $json.company ?? $json.author_name ?? '',   $json.published_at ? new Date($json.published_at).toISOString() : new Date().toISOString(),   Number($json.job_score ?? $json.score ?? 0),   Number($json.confidence ?? 0),   $json.routing_action ?? 'review',   $json.ai_reason ?? '',   JSON.stringify($json.extracted_entities ?? {}),   JSON.stringify($json ?? {}) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1280,
+        -624
+      ],
+      "id": "2cab9fd9-1ed8-418f-93be-6c3a64ab4d59",
+      "name": "Upsert LinkedIn Opportunity",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH incoming AS (\n  SELECT jsonb_array_elements_text($1::jsonb) AS source_record_key\n),\nmatches AS (\n  SELECT o.source_record_key\n  FROM opportunities o\n  JOIN incoming i ON i.source_record_key = o.source_record_key\n)\nSELECT\n  $2::jsonb AS jobs,\n  COALESCE((SELECT jsonb_agg(source_record_key) FROM matches), '[]'::jsonb) AS existing_keys;",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($json.sourceRecordKeys) }},{{ JSON.stringify($json.jobs) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1136,
+        -880
+      ],
+      "id": "0b2b8ad6-a846-464e-bee0-7da1af047292",
+      "name": "Lookup Existing Opportunities - LinkedIn",
+      "credentials": {
+        "postgres": {
+          "id": "3UUMCDPkM7rDCwB8",
+          "name": "radarX"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "source_normalized_key",
+              "field2": "normalized_key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1536,
+        -624
+      ],
+      "id": "e07b0ca7-0936-4d41-917b-0ae97563038f",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "chatId": "adadadad",
+        "text": "=",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        -992
+      ],
+      "id": "5e6ce5a4-a1e1-457b-952e-4a95f7c1fc15",
+      "name": "Send a text message1",
+      "webhookId": "13095bca-9e6e-4dfc-95a5-383f7c9d2cfc",
+      "credentials": {
+        "telegramApi": {
+          "id": "YC4E4fkzuB9IeW6c",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Discover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discover": {
+      "main": [
+        [
+          {
+            "node": "Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scoring": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confidence Engine": {
+      "main": [
+        [
+          {
+            "node": "Upsert Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Confidence Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Load Active Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "keys": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Engine": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Merge2": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Batch Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Active Sources": {
+      "main": [
+        [
+          {
+            "node": "Build Scan Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Scan Plan": {
+      "main": [
+        [
+          {
+            "node": "Fetch Reddit Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Reddit Chunks": {
+      "main": [
+        [
+          {
+            "node": "Normalize Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Posts": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate In Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate In Run": {
+      "main": [
+        [
+          {
+            "node": "Pack Posts For Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack Posts For Lookup": {
+      "main": [
+        [
+          {
+            "node": "Lookup Existing Opportunities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Existing Opportunities": {
+      "main": [
+        [
+          {
+            "node": "Filter Unseen + Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Unseen + Score": {
+      "main": [
+        [
+          {
+            "node": "Route Decision`",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Decision`": {
+      "main": [
+        [
+          {
+            "node": "Upsert Opportunities",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Batch AI Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch AI Candidates": {
+      "main": [
+        [
+          {
+            "node": "Sanitize AI Queue Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Batch Classifier": {
+      "main": [
+        []
+      ]
+    },
+    "Enqueue AI Tasks": {
+      "main": [
+        []
+      ]
+    },
+    "Merge Final Candidates": {
+      "main": [
+        []
+      ]
+    },
+    "Upsert Opportunities": {
+      "main": [
+        [
+          {
+            "node": "if telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if telegram": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize AI Queue Payload": {
+      "main": [
+        [
+          {
+            "node": "Enqueue AI Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate In Run - LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate In Run - LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Pack Jobs For Lookup - LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pack Jobs For Lookup - LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Lookup Existing Opportunities - LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Unseen + Route - LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Upsert LinkedIn Source",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        []
+      ]
+    },
+    "Upsert LinkedIn Source": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Lookup Existing Opportunities - LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Filter Unseen + Route - LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Upsert LinkedIn Opportunity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Africa/Tunis",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a788babe-be89-4fe3-8631-7e1e7902c07a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "487dd148d0d5db50bc71aed65004a3be633e094f2caba58e2dafce237ab73728"
+  },
+  "id": "1BnMQBiyPvwXx8bZ",
+  "tags": []
+}
