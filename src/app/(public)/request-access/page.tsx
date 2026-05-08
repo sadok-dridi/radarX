@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { RequestAccessForm } from "@/components/auth/request-access-form";
 import { getCurrentSession } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function RequestAccessPage() {
   const session = await getCurrentSession({ allowDevBypass: false });
 

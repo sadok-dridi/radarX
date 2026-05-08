@@ -5,13 +5,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clsx } from "clsx";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { loginAction, type LoginActionState } from "@/app/(public)/login/actions";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
 export function LoginForm() {
-  const router = useRouter();
   const [serverState, setServerState] = useState<LoginActionState>({ status: "idle" });
 
   const {
@@ -31,8 +29,7 @@ export function LoginForm() {
     try {
       const result = await loginAction(data);
       if (result?.status === "success" && result.redirectTo) {
-        router.replace(result.redirectTo);
-        router.refresh();
+        window.location.assign(result.redirectTo);
         return;
       }
 
