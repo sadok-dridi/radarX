@@ -1,7 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { verifyPassword } from "@/lib/auth/password";
 import { createUserSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
@@ -10,8 +8,9 @@ import { getRequestIp } from "@/lib/security/request-context";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
 export type LoginActionState = {
-  status: "idle" | "error";
+  status: "idle" | "error" | "success";
   message?: string;
+  redirectTo?: string;
 };
 
 export async function loginAction(data: LoginInput): Promise<LoginActionState> {
@@ -91,7 +90,7 @@ export async function loginAction(data: LoginInput): Promise<LoginActionState> {
       role: user.role,
     });
 
-    redirect("/app");
+    return { status: "success", redirectTo: "/app" };
   } catch (error) {
     if (isRateLimitError(error)) {
       return {
