@@ -14,6 +14,8 @@ const DEFAULT_HEADERS = {
   "cache-control": "no-cache",
 };
 
+let redditToken = null;
+
 const SUBREDDIT_SEARCH_KEYWORDS = [
   "freelance",
   "freelancing",
@@ -219,6 +221,14 @@ function countMatches(text, words) {
 
 function cleanString(value = "") {
   return String(value || "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#32;/g, " ")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/<[^>]+>/g, " ")
     .replace(/[\uD800-\uDFFF]/g, "")
     .replace(/\u0000/g, "")
     .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")
@@ -237,14 +247,113 @@ function hoursSince(timestamp) {
   return (Date.now() - parsed) / (1000 * 60 * 60);
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { headers: DEFAULT_HEADERS });
+function daysSince(timestamp) {
+  if (!timestamp) return Infinity;
+  const parsed = new Date(timestamp).getTime();
+  if (Number.isNaN(parsed)) return Infinity;
+  return (Date.now() - parsed) / (1000 * 60 * 60 * 24);
+}
+
+function publishedAtFromRawPost(rawPost) {
+  if (!rawPost?.created_utc) return null;
+  const parsed = new Date(Number(rawPost.created_utc) * 1000);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function newestPublishedAt(rawPosts) {
+  let newest = null;
+
+  for (const rawPost of rawPosts) {
+    const publishedAt = publishedAtFromRawPost(rawPost);
+    if (!publishedAt) continue;
+    if (!newest || new Date(publishedAt) > new Date(newest)) newest = publishedAt;
+  }
+
+  return newest;
+}
+
+function isFreshPost(post, maxAgeDays) {
+  if (!maxAgeDays) return true;
+  return daysSince(post.published_at) <= maxAgeDays;
+}
+
+async function getRedditAccessToken(config) {
+  if (!config.redditClientId || !config.redditClientSecret) return null;
+  if (redditToken && redditToken.expiresAt > Date.now() + 60_000) return redditToken.value;
+
+  const credentials = Buffer.from(`${config.redditClientId}:${config.redditClientSecret}`).toString("base64");
+  const response = await fetch("https://www.reddit.com/api/v1/access_token", {
+    method: "POST",
+    headers: {
+      ...DEFAULT_HEADERS,
+      authorization: `Basic ${credentials}`,
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Reddit OAuth failed with HTTP ${response.status}${body ? `: ${body.slice(0, 240)}` : ""}`);
+  }
+
+  const payload = await response.json();
+  redditToken = {
+    value: payload.access_token,
+    expiresAt: Date.now() + Number(payload.expires_in || 3600) * 1000,
+  };
+  return redditToken.value;
+}
+
+async function redditApiUrl(config, path, params = {}) {
+  const token = await getRedditAccessToken(config);
+  const base = token ? "https://oauth.reddit.com" : "https://www.reddit.com";
+  const url = new URL(`${base}${path}`);
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, String(value));
+  }
+  return { url: url.toString(), token };
+}
+
+async function fetchJson(config, path, params = {}) {
+  const { url, token } = await redditApiUrl(config, path, params);
+  const headers = token ? { ...DEFAULT_HEADERS, authorization: `Bearer ${token}` } : DEFAULT_HEADERS;
+  const response = await fetch(url, { headers });
   if (!response.ok) {
     const body = await response.text().catch(() => "");
     throw new Error(`HTTP ${response.status} for ${url}${body ? `: ${body.slice(0, 240)}` : ""}`);
   }
 
   return response.json();
+}
+
+async function fetchPublicText(url) {
+  const response = await fetch(url, { headers: { ...DEFAULT_HEADERS, accept: "application/rss+xml,application/xml,text/xml,*/*" } });
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`HTTP ${response.status} for ${url}${body ? `: ${body.slice(0, 240)}` : ""}`);
+  }
+
+  return response.text();
+}
+
+function extractXml(value, regex) {
+  const match = String(value || "").match(regex);
+  return match ? cleanString(match[1]) : "";
+}
+
+function extractXmlRaw(value, regex) {
+  const match = String(value || "").match(regex);
+  return match ? match[1].trim() : "";
+}
+
+function extractSubredditFromLink(link) {
+  if (!link || !link.includes("/r/")) return "";
+  return link.split("/r/")[1]?.split("/")[0]?.toLowerCase() || "";
+}
+
+function atomEntries(xml) {
+  return String(xml || "").match(/<entry>([\s\S]*?)<\/entry>/g) || [];
 }
 
 async function withWorkflowRun(pool, workflowKey, workflowName, triggerType, fn) {
@@ -380,22 +489,64 @@ function normalizeDiscoveredSubreddit(raw, query) {
   };
 }
 
+function parseDiscoveredSubredditsFromRss(xml, query) {
+  const resultsMap = new Map();
+
+  for (const entry of atomEntries(xml)) {
+    const title = extractXml(entry, /<title[^>]*>([\s\S]*?)<\/title>/);
+    const link = extractXmlRaw(entry, /<link[^>]*href="([^"]+)"/);
+    const updated = extractXml(entry, /<updated[^>]*>([\s\S]*?)<\/updated>/);
+    const description = extractXml(entry, /<content[^>]*>([\s\S]*?)<\/content>/);
+    const subreddit = extractSubredditFromLink(link);
+    if (!subreddit) continue;
+
+    const source = {
+      subreddit,
+      title,
+      description,
+      link,
+      updated: updated || new Date().toISOString(),
+      source: "reddit_rss",
+      parsedAt: new Date().toISOString(),
+      query,
+      raw: entry,
+    };
+    const existing = resultsMap.get(subreddit);
+
+    if (!existing || description.length > (existing.description || "").length || source.updated > existing.updated) {
+      resultsMap.set(subreddit, source);
+    }
+  }
+
+  return Array.from(resultsMap.values());
+}
+
+async function fetchDiscoveredSubreddits(config, keyword) {
+  if (config.redditClientId && config.redditClientSecret) {
+    const payload = await fetchJson(config, "/subreddits/search.json", {
+      q: keyword,
+      limit: config.discoveryLimit,
+      raw_json: 1,
+    });
+
+    return (payload?.data?.children || [])
+      .map((child) => normalizeDiscoveredSubreddit(child?.data || {}, keyword))
+      .filter(Boolean);
+  }
+
+  const rssUrl = `https://www.reddit.com/subreddits/search.rss?q=${encodeURIComponent(keyword)}`;
+  const xml = await fetchPublicText(rssUrl);
+  return parseDiscoveredSubredditsFromRss(xml, keyword);
+}
+
 async function discoverSubreddits(config, pool) {
   const keywords = config.discoveryKeywords;
   const resultsMap = new Map();
   const errors = [];
 
   for (const keyword of keywords) {
-    const url = `https://www.reddit.com/subreddits/search.json?q=${encodeURIComponent(keyword)}&limit=${config.discoveryLimit}&raw_json=1`;
-
     try {
-      const payload = await fetchJson(url);
-      const children = payload?.data?.children || [];
-
-      for (const child of children) {
-        const source = normalizeDiscoveredSubreddit(child?.data || {}, keyword);
-        if (!source) continue;
-
+      for (const source of await fetchDiscoveredSubreddits(config, keyword)) {
         const existing = resultsMap.get(source.subreddit);
         if (!existing || source.description.length > (existing.description || "").length || source.updated > existing.updated) {
           resultsMap.set(source.subreddit, source);
@@ -493,6 +644,7 @@ async function loadActiveSources(pool) {
     `SELECT
        id,
        COALESCE(NULLIF(slug, ''), NULLIF(external_id, ''), regexp_replace(name, '^r/', '', 'i')) AS subreddit,
+       state,
        confidence,
        monitoring_mode,
        last_scanned_at
@@ -593,10 +745,118 @@ function scoreUnseenPost(post) {
   };
 }
 
-async function fetchSubredditPosts(subreddit, limit) {
-  const url = `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/new.json?limit=${limit}&raw_json=1`;
-  const payload = await fetchJson(url);
-  return (payload?.data?.children || []).map((child) => child?.data).filter(Boolean);
+async function fetchSubredditPosts(config, subreddit, limit) {
+  if (config.redditClientId && config.redditClientSecret) {
+    const payload = await fetchJson(config, `/r/${encodeURIComponent(subreddit)}/new.json`, { limit, raw_json: 1 });
+    return (payload?.data?.children || []).map((child) => child?.data).filter(Boolean);
+  }
+
+  const rssUrl = `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/new/.rss`;
+  const xml = await fetchPublicText(rssUrl);
+  return atomEntries(xml)
+    .slice(0, limit)
+    .map((entry) => {
+      const title = extractXml(entry, /<title[^>]*>([\s\S]*?)<\/title>/);
+      const url = extractXmlRaw(entry, /<link[^>]*href="([^"]+)"/);
+      const author = extractXml(entry, /<name[^>]*>([\s\S]*?)<\/name>/).replace(/^\/u\//, "");
+      const published = extractXml(entry, /<published[^>]*>([\s\S]*?)<\/published>/);
+      const rawContent = extractXmlRaw(entry, /<content[^>]*>([\s\S]*?)<\/content>/);
+      const content = cleanString(rawContent);
+
+      return {
+        id: url.split("/comments/")[1]?.split("/")[0] || null,
+        permalink: url.startsWith("https://www.reddit.com") ? url.replace("https://www.reddit.com", "") : "",
+        url,
+        title,
+        selftext: content,
+        author,
+        created_utc: published ? Math.floor(new Date(published).getTime() / 1000) : null,
+        ups: 0,
+        num_comments: 0,
+        over_18: false,
+        raw_rss_entry: entry,
+      };
+    })
+    .filter((post) => post.title && (post.permalink || post.url));
+}
+
+function sourceScanDecision(source, rawPosts, config) {
+  const newest = newestPublishedAt(rawPosts);
+  const ageDays = daysSince(newest);
+  const currentConfidence = Number(source.confidence || 0);
+
+  if (!rawPosts.length || ageDays > config.sourceArchiveAfterDays) {
+    return {
+      newest,
+      state: "archived",
+      monitoringMode: "ignored",
+      confidence: 0,
+      reason: !rawPosts.length ? "no_posts_returned" : `newest_post_older_than_${config.sourceArchiveAfterDays}_days`,
+    };
+  }
+
+  if (ageDays > config.sourceStaleAfterDays) {
+    return {
+      newest,
+      state: "candidate",
+      monitoringMode: "monitored",
+      confidence: Math.max(0, currentConfidence - 30),
+      reason: `newest_post_older_than_${config.sourceStaleAfterDays}_days`,
+    };
+  }
+
+  if (ageDays > config.maxPostAgeDays) {
+    return {
+      newest,
+      state: source.state || "validated",
+      monitoringMode: source.monitoring_mode || "scanned",
+      confidence: Math.max(0, currentConfidence - 10),
+      reason: `newest_post_older_than_${config.maxPostAgeDays}_days`,
+    };
+  }
+
+  return {
+    newest,
+    state: source.state || "validated",
+    monitoringMode: source.monitoring_mode || "scanned",
+    confidence: Math.min(100, Math.max(currentConfidence, 70)),
+    reason: "fresh_posts_available",
+  };
+}
+
+async function updateSourceScanState(pool, source, rawPosts, config) {
+  if (!source.id) return null;
+
+  const decision = sourceScanDecision(source, rawPosts, config);
+
+  await pool.query(
+    `UPDATE sources
+     SET state = $2::source_state,
+         monitoring_mode = $3::source_monitoring_mode,
+         confidence = $4,
+         last_seen_at = COALESCE($5::timestamptz, last_seen_at),
+         last_scanned_at = now(),
+         last_successful_run_at = now(),
+         source_metadata = source_metadata || $6::jsonb,
+         updated_at = now()
+     WHERE id = $1`,
+    [
+      source.id,
+      decision.state,
+      decision.monitoringMode,
+      decision.confidence,
+      decision.newest,
+      JSON.stringify({
+        last_scan_health: {
+          reason: decision.reason,
+          newest_published_at: decision.newest,
+          checked_at: new Date().toISOString(),
+        },
+      }),
+    ],
+  );
+
+  return decision;
 }
 
 async function lookupExistingOpportunityKeys(pool, keys) {
@@ -707,24 +967,27 @@ async function scanJobs(config, pool) {
   const seen = new Set();
   const posts = [];
   const errors = [];
+  const staleSources = [];
+  let skippedOldPosts = 0;
 
   for (const source of sources) {
     try {
-      const rawPosts = await fetchSubredditPosts(source.subreddit, config.scanLimit);
+      const rawPosts = await fetchSubredditPosts(config, source.subreddit, config.scanLimit);
+      const sourceDecision = config.dryRun ? sourceScanDecision(source, rawPosts, config) : await updateSourceScanState(pool, source, rawPosts, config);
+      if (sourceDecision && sourceDecision.reason !== "fresh_posts_available") {
+        staleSources.push({ subreddit: source.subreddit, ...sourceDecision });
+      }
+
       for (const rawPost of rawPosts) {
         const post = normalizePost(rawPost, source.subreddit);
         if (!post || seen.has(post.source_record_key)) continue;
+        if (!isFreshPost(post, config.maxPostAgeDays)) {
+          skippedOldPosts += 1;
+          continue;
+        }
+
         seen.add(post.source_record_key);
         posts.push(post);
-      }
-
-      if (!config.dryRun && source.id) {
-        await pool.query(
-          `UPDATE sources
-           SET last_scanned_at = now(), last_successful_run_at = now(), updated_at = now()
-           WHERE id = $1`,
-          [source.id],
-        );
       }
     } catch (error) {
       errors.push({ subreddit: source.subreddit, error: error instanceof Error ? error.message : String(error) });
@@ -751,7 +1014,7 @@ async function scanJobs(config, pool) {
       itemCountIn: posts.length,
       itemCountOut: direct.length + needsAi.length,
       errorCount: errors.length,
-      summary: { candidates: candidates.length, direct: direct.length, needsAi: needsAi.length, errors },
+      summary: { candidates: candidates.length, direct: direct.length, needsAi: needsAi.length, skippedOldPosts, staleSources, errors },
     };
   }
 
@@ -787,7 +1050,7 @@ async function scanJobs(config, pool) {
     itemCountIn: posts.length,
     itemCountOut: upserted,
     errorCount: errors.length,
-    summary: { candidates: candidates.length, direct: direct.length, needsAi: needsAi.length, upserted, aiTasks, telegramSent, errors },
+    summary: { candidates: candidates.length, direct: direct.length, needsAi: needsAi.length, upserted, aiTasks, telegramSent, skippedOldPosts, staleSources, errors },
   };
 }
 
@@ -809,7 +1072,12 @@ function buildConfig() {
     scanLimit: toPositiveInt(cli.limit || process.env.REDDIT_LIMIT, 50),
     scanSubreddits: listFromEnv(cli.subreddits || process.env.REDDIT_SUBREDDITS, []),
     maxAiItemsPerRun: toPositiveInt(cli.maxAiItemsPerRun || process.env.REDDIT_MAX_AI_ITEMS_PER_RUN, 24),
+    maxPostAgeDays: toPositiveInt(cli.maxPostAgeDays || process.env.REDDIT_MAX_POST_AGE_DAYS, 14),
+    sourceStaleAfterDays: toPositiveInt(cli.sourceStaleAfterDays || process.env.REDDIT_SOURCE_STALE_AFTER_DAYS, 30),
+    sourceArchiveAfterDays: toPositiveInt(cli.sourceArchiveAfterDays || process.env.REDDIT_SOURCE_ARCHIVE_AFTER_DAYS, 90),
     fetchDelayMs: toPositiveInt(cli.fetchDelayMs || process.env.REDDIT_FETCH_DELAY_MS, 2000),
+    redditClientId: cli.redditClientId || process.env.REDDIT_CLIENT_ID || "",
+    redditClientSecret: cli.redditClientSecret || process.env.REDDIT_CLIENT_SECRET || "",
     telegramBotToken: cli.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN || "",
     telegramChatId: cli.telegramChatId || process.env.TELEGRAM_CHAT_ID || "",
   };

@@ -14,15 +14,17 @@ It keeps the LinkedIn workflow unchanged.
 
 ## How It Works
 
-1. Discovers subreddits from Reddit JSON search.
+1. Discovers subreddits from Reddit JSON search when OAuth is configured, otherwise Reddit RSS search.
 2. Scores discovered subreddits with the same keyword logic from the n8n workflow.
 3. Upserts validated subreddit sources into Postgres.
 4. Loads active Reddit sources from Postgres every scan cycle.
-5. Fetches each subreddit via `new.json` instead of RSS.
+5. Fetches each subreddit via OAuth JSON when configured, otherwise `new/.rss`.
 6. Normalizes posts to the existing opportunity shape.
-7. Applies the same unseen-post scoring and routing logic from `RadarX2.json`.
-8. Inserts direct accepts into `opportunities`.
-9. Inserts AI candidates into `opportunities` and enqueues `ai_tasks`.
+7. Skips stale posts older than `REDDIT_MAX_POST_AGE_DAYS`.
+8. Downgrades stale subreddit sources and archives inactive sources.
+9. Applies the same unseen-post scoring and routing logic from `RadarX2.json`.
+10. Inserts direct accepts into `opportunities`.
+11. Inserts AI candidates into `opportunities` and enqueues `ai_tasks`.
 
 ## Run Locally
 
@@ -60,8 +62,12 @@ Important optional values:
 
 - `REDDIT_RADAR_RUN_MODE=once|loop`
 - `REDDIT_RADAR_TASK=all|discover|scan`
+- `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET` for Reddit OAuth. Recommended on VPS hosts.
 - `REDDIT_DISCOVERY_INTERVAL_HOURS`
 - `REDDIT_SCAN_INTERVAL_MINUTES`
+- `REDDIT_MAX_POST_AGE_DAYS`, default `14`
+- `REDDIT_SOURCE_STALE_AFTER_DAYS`, default `30`
+- `REDDIT_SOURCE_ARCHIVE_AFTER_DAYS`, default `90`
 - `REDDIT_FETCH_DELAY_MS`
 - `REDDIT_SUBREDDITS` for testing source overrides
 - `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` for direct Telegram alerts

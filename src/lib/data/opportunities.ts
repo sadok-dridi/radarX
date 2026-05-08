@@ -324,13 +324,13 @@ export async function getOpportunitiesList(filters?: {
     const offset = (page - 1) * limit;
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
-    let orderBy = "ORDER BY o.last_seen_at DESC NULLS LAST";
+    let orderBy = "ORDER BY o.published_at DESC NULLS LAST, o.first_seen_at DESC NULLS LAST";
     if (searchParamIndex && filters?.sort === "smart") {
-      orderBy = `ORDER BY ts_rank(o.search_document, websearch_to_tsquery('english', $${searchParamIndex})) DESC, o.score DESC NULLS LAST, o.last_seen_at DESC NULLS LAST`;
+      orderBy = `ORDER BY ts_rank(o.search_document, websearch_to_tsquery('english', $${searchParamIndex})) DESC, o.score DESC NULLS LAST, o.published_at DESC NULLS LAST, o.first_seen_at DESC NULLS LAST`;
     } else if (filters?.sort === "smart") {
-      orderBy = "ORDER BY o.score DESC NULLS LAST, o.confidence DESC NULLS LAST, o.last_seen_at DESC NULLS LAST";
+      orderBy = "ORDER BY o.score DESC NULLS LAST, o.confidence DESC NULLS LAST, o.published_at DESC NULLS LAST, o.first_seen_at DESC NULLS LAST";
     } else if (filters?.sort === "confidence") {
-      orderBy = "ORDER BY o.confidence DESC NULLS LAST, o.score DESC NULLS LAST, o.last_seen_at DESC NULLS LAST";
+      orderBy = "ORDER BY o.confidence DESC NULLS LAST, o.score DESC NULLS LAST, o.published_at DESC NULLS LAST, o.first_seen_at DESC NULLS LAST";
     }
 
     let query = `
