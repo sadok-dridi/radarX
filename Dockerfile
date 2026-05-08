@@ -12,6 +12,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN mkdir -p public
 # Generate prisma client again just in case, then build Next.js
 RUN npx prisma generate
 RUN npm run build
