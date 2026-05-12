@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const expectedState = await consumeGoogleOAuthState();
 
   if (!code || !state || !expectedState || state !== expectedState) {
-    return NextResponse.redirect(new URL("/login?error=GoogleAuthFailed", req.url));
+    return NextResponse.redirect(new URL("/login?error=GoogleAuthFailed", process.env.APP_URL ?? req.url));
   }
 
   try {
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     }
 
     if (user.accessStatus !== "active") {
-      return NextResponse.redirect(new URL("/login?error=AccountPending", req.url));
+      return NextResponse.redirect(new URL("/login?error=AccountPending", process.env.APP_URL ?? req.url));
     }
 
     await createUserSession({
@@ -69,9 +69,9 @@ export async function GET(req: Request) {
       role: user.role,
     });
 
-    return NextResponse.redirect(new URL("/app", req.url));
+    return NextResponse.redirect(new URL("/app", process.env.APP_URL ?? req.url));
   } catch (err) {
     console.error("Google Auth Error:", err);
-    return NextResponse.redirect(new URL("/login?error=GoogleAuthFailed", req.url));
+    return NextResponse.redirect(new URL("/login?error=GoogleAuthFailed", process.env.APP_URL ?? req.url));
   }
 }

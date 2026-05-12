@@ -32,3 +32,4 @@ scripts/
 scripts/*
 !scripts/reddit-radar-worker.mjs
 test-*.js
+AGENTS.md
