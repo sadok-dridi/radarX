@@ -6,8 +6,14 @@ import { getCurrentSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function LoginPage({ searchParams }: Props) {
   const session = await getCurrentSession({ allowDevBypass: false });
+  const params = await searchParams;
+  const error = params.error;
 
   if (session) {
     redirect("/app");
@@ -22,6 +28,35 @@ export default async function LoginPage() {
           Approved users can sign into the private workspace here. If your account is still pending, login will stay
           blocked until the owner approves your request.
         </p>
+
+        {error === "AccountPending" && (
+          <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+            <p className="font-medium">Account pending approval</p>
+            <p className="mt-1 text-slate-300">
+              Your account has been created but needs to be approved by the workspace owner before you can log in.
+              Please wait for approval.
+            </p>
+          </div>
+        )}
+
+        {error === "GoogleAuthFailed" && (
+          <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <p className="font-medium">Google Authentication Failed</p>
+            <p className="mt-1 text-slate-300">
+              There was a problem signing in with Google. Please try again.
+            </p>
+          </div>
+        )}
+
+        {error === "TooManyAttempts" && (
+          <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <p className="font-medium">Too many attempts</p>
+            <p className="mt-1 text-slate-300">
+              Please wait a moment before trying again.
+            </p>
+          </div>
+        )}
+
         <LoginForm />
         <p className="mt-5 text-sm text-slate-400">
           Need access?{" "}

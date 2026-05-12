@@ -56,6 +56,16 @@ export async function GET(req: Request) {
           accessStatus: "pending"
         }
       });
+
+      // Create an access request so the admin can approve them
+      await db.accessRequest.create({
+        data: {
+          email,
+          displayName: name || null,
+          status: "pending",
+          linkedUserId: user.id,
+        }
+      });
     }
 
     if (user.accessStatus !== "active") {
