@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { TransitionLink } from "@/components/layout/page-transition";
 import { redirect } from "next/navigation";
 
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginForm } from "./(components)/login-form";
 import { getCurrentSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +20,11 @@ export default async function LoginPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-xl items-center pt-8 sm:pt-0">
+    <div className="mx-auto flex min-h-[calc(100vh-57px)] max-w-xl items-center pt-8 sm:pt-0">
       <div className="panel w-full p-6 sm:p-8">
-        <p className="section-kicker">Private access</p>
-        <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white">Login</h1>
-        <p className="mt-4 text-sm leading-7 text-slate-300">
+        <p className="section-kicker" data-animate>Private access</p>
+        <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white" data-animate>Login</h1>
+        <p className="mt-4 text-sm leading-7 text-slate-300" data-animate>
           Approved users can sign into the private workspace here. If your account is still pending, login will stay
           blocked until the owner approves your request.
         </p>
@@ -57,12 +57,14 @@ export default async function LoginPage({ searchParams }: Props) {
           </div>
         )}
 
-        <LoginForm />
-        <p className="mt-5 text-sm text-slate-400">
+        <div data-animate>
+          <LoginForm />
+        </div>
+        <p className="mt-5 text-sm text-slate-400" data-animate>
           Need access?{" "}
-          <Link href="/request-access" className="text-white transition hover:text-accent-cyan">
+          <TransitionLink href="/request-access" className="text-white transition hover:text-accent-cyan">
             Request access
-          </Link>
+          </TransitionLink>
         </p>
       </div>
     </div>

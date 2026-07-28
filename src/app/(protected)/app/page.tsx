@@ -4,6 +4,7 @@ import { getDashboardOverview } from "@/lib/data/opportunities";
 import { getCurrentSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import { GsapStaggerContainer } from "@/components/layout/gsap-stagger";
 
 export default async function DashboardHomePage() {
   const session = await getCurrentSession();
@@ -16,37 +17,38 @@ export default async function DashboardHomePage() {
   const recentFailuresCount = liveOverview?.recentFailuresCount ?? 0;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <GsapStaggerContainer>
+      <div className="space-y-8">
       
-      {/* 
+        {/* 
         =========================================================
         N8N WARNING BANNER (OWNERS ONLY)
         =========================================================
       */}
-      {isOwner && recentFailuresCount > 0 && (
-        <section className="relative overflow-hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-4 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.15)] flex items-start sm:items-center gap-4">
-          <div className="flex-shrink-0 mt-0.5 sm:mt-0">
-            <AlertCircle className="h-6 w-6 text-red-400" />
+        {isOwner && recentFailuresCount > 0 && (
+          <div className="gsap-stagger-item opacity-0 relative overflow-hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-4 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.15)] flex items-start sm:items-center gap-4">
+            <div className="flex-shrink-0 mt-0.5 sm:mt-0">
+              <AlertCircle className="h-6 w-6 text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-red-200">System Warning: Workflow Failures Detected</h3>
+              <p className="mt-1 text-sm text-red-300/80">
+                There have been <strong className="text-red-200">{recentFailuresCount}</strong> failed n8n workflows in the last 24 hours. Please check your n8n dashboard to review the logs.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-red-200">System Warning: Workflow Failures Detected</h3>
-            <p className="mt-1 text-sm text-red-300/80">
-              There have been <strong className="text-red-200">{recentFailuresCount}</strong> failed n8n workflows in the last 24 hours. Please check your n8n dashboard to review the logs.
-            </p>
-          </div>
-        </section>
-      )}
+        )}
 
       {/* 
         =========================================================
         TOP STATS GRID
         =========================================================
       */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {stats.map((stat) => (
-          <article 
+          <div 
             key={stat.label} 
-            className="group relative overflow-hidden rounded-2xl md:rounded-[28px] border border-white/10 bg-white/[0.03] p-4 sm:p-6 backdrop-blur-2xl transition-all hover:-translate-y-1 hover:border-white/10 hover:bg-white/[0.05] shadow-[0_0_30px_rgba(0,0,0,0.2)]"
+            className="gsap-stagger-item opacity-0 group relative overflow-hidden rounded-2xl md:rounded-[28px] border border-white/10 bg-white/[0.03] p-4 sm:p-6 backdrop-blur-2xl transition-all hover:-translate-y-1 hover:border-white/10 hover:bg-white/[0.05] shadow-[0_0_30px_rgba(0,0,0,0.2)]"
           >
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-accent-cyan/10 blur-3xl group-hover:bg-accent-cyan/20 transition-colors" />
             <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -60,19 +62,19 @@ export default async function DashboardHomePage() {
             <p className="mt-2 text-[10px] sm:text-xs font-medium text-slate-400 relative z-10">
               {stat.detail}
             </p>
-          </article>
+          </div>
         ))}
-      </section>
+      </div>
 
       {/* 
         =========================================================
         MAIN CONTENT COLUMNS
         =========================================================
       */}
-      <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         
         {/* LEFT COLUMN: OPPORTUNITIES */}
-        <div className="rounded-[32px] border border-white/10 bg-white/[0.05] p-5 sm:p-8 backdrop-blur-2xl relative overflow-hidden">
+        <div className="gsap-stagger-item opacity-0 rounded-[32px] border border-white/10 bg-white/[0.05] p-5 sm:p-8 backdrop-blur-2xl relative overflow-hidden">
           
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -127,7 +129,7 @@ export default async function DashboardHomePage() {
         <div className="space-y-6 flex flex-col">
           
           {/* RUN ACTIVITY */}
-          <section className="flex-1 rounded-[32px] border border-white/10 bg-white/[0.05] p-5 sm:p-8 backdrop-blur-2xl relative overflow-hidden">
+          <div className="gsap-stagger-item opacity-0 flex-1 rounded-[32px] border border-white/10 bg-white/[0.05] p-5 sm:p-8 backdrop-blur-2xl relative overflow-hidden">
             <div className="mb-6">
               <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 mb-1">
                 System Log
@@ -160,10 +162,10 @@ export default async function DashboardHomePage() {
                 </div>
               ))}
             </div>
-          </section>
+          </div>
 
           {/* SYSTEM STATUS */}
-          <section className="rounded-[32px] border border-white/10 bg-white/[0.05] p-5 sm:p-8 relative overflow-hidden group backdrop-blur-2xl">
+          <div className="gsap-stagger-item opacity-0 rounded-[32px] border border-white/10 bg-white/[0.05] p-5 sm:p-8 relative overflow-hidden group backdrop-blur-2xl">
             <div className="absolute -right-20 -bottom-20 h-40 w-40 rounded-full bg-accent-cyan/10 blur-3xl group-hover:bg-accent-cyan/20 transition-colors" />
             
             <div className="relative z-10 flex items-center gap-3 mb-4">
@@ -174,10 +176,11 @@ export default async function DashboardHomePage() {
             <p className="text-sm leading-relaxed text-slate-300 relative z-10">
               The neural link to the primary PostgreSQL cluster is active. Workflow runs, pipeline backlogs, and incoming opportunities are being synchronized in real-time.
             </p>
-          </section>
+          </div>
         </div>
         
-      </section>
-    </div>
+      </div>
+      </div>
+    </GsapStaggerContainer>
   );
 }

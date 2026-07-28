@@ -5,27 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#09041a", // Deep dark purple-blue background
-        mist: "#edf2fa",
-        slate: {
-          50: "#f5f3fa",
-          100: "#e9e4f5",
-          200: "#d1c7eb",
-          300: "#b19edd",
-          400: "#9374cc",
-          500: "#7b51bd",
-          600: "#683baa",
-          700: "#572e90",
-          800: "#4a2777",
-          900: "#3c2160",
-          950: "#1a0b33"
-        },
         accent: {
+          cyan: "#06b6d4",
+          purple: "#8b5cf6",
+          pink: "#ec4899",
           amber: "#f2b760",
-          cyan: "#38bdf8", // map to bright neon blue
-          mint: "#c084fc", // map to neon purple
           blue: "#3b82f6",
-          purple: "#9333ea"
         }
       },
       fontFamily: {
@@ -33,11 +18,11 @@ const config: Config = {
         display: ["Space Grotesk", "Avenir Next Condensed", "Trebuchet MS", "sans-serif"]
       },
       boxShadow: {
-        glow: "0 0 40px rgba(147, 51, 234, 0.25)",
-        "glow-blue": "0 0 40px rgba(56, 189, 248, 0.25)"
+        glow: "0 0 40px rgba(139, 92, 246, 0.25)",
+        "glow-cyan": "0 0 40px rgba(6, 182, 212, 0.25)"
       },
       backgroundImage: {
-        "radar-grid": "linear-gradient(rgba(147, 51, 234, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px)"
+        "radar-grid": "linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)"
       },
       animation: {
         "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",

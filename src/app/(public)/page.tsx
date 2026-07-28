@@ -1,333 +1,223 @@
 "use client";
 
-import Link from "next/link";
-import { motion } from "framer-motion";
-import {
-  Radar,
-  Filter,
-  CheckCircle2,
-  Route,
-  Activity,
-  Database,
-  Shield,
-  Zap,
-  Lock,
-  ChevronRight,
-} from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { TransitionLink } from "@/components/layout/page-transition";
+import { ChevronRight, TrendingUp, BarChart3, Sparkles, Compass, Target, Lock } from "lucide-react";
 
-const signalStages = [
+gsap.registerPlugin(ScrollTrigger);
+
+const sections = [
   {
-    name: "Discover",
-    icon: <Radar className="h-6 w-6 text-accent-cyan" />,
-    body: "Continuous deep-web discovery hunts for high-value founder and developer communities based on intent keywords.",
+    title: "Built on market signals.",
+    body: "Every day, the industry tells a story. Paragon helps you understand it.",
+    icon: BarChart3,
   },
   {
-    name: "Score",
-    icon: <Filter className="h-6 w-6 text-accent-mint" />,
-    body: "Multi-layered scoring engine measures exact hiring intent, technical relevance, freshness, and post quality.",
+    title: "Clarity.",
+    body: "Technology moves fast. Your decisions shouldn't rely on opinions.",
+    icon: Sparkles,
   },
   {
-    name: "Validate",
-    icon: <CheckCircle2 className="h-6 w-6 text-accent-amber" />,
-    body: "Proprietary AI classification aggressively strips self-promo, noise, and speculative posts before human review.",
+    title: "Intelligence that evolves.",
+    body: "Markets change. Skills change. Opportunities change. Stay aligned with what matters.",
+    icon: Compass,
   },
   {
-    name: "Route",
-    icon: <Route className="h-6 w-6 text-accent-blue" />,
-    body: "Urgent enterprise matches route instantly to alerts; the rest become structured records in your private hub.",
+    title: "Built for ambitious engineers.",
+    body: "Not everyone wants another job board. Some want to understand where the industry is going.",
+    icon: Target,
+  },
+  {
+    title: "Make better decisions.",
+    body: "Learn with intention. Grow with confidence.",
+    icon: TrendingUp,
   },
 ];
-
-const systemLayers = [
-  {
-    title: "Discovery Engine",
-    icon: <Activity className="h-5 w-5 text-slate-300" />,
-    body: "Dynamically identifies and tracks candidate communities, keeping only the sources that consistently produce real signal.",
-  },
-  {
-    title: "Monitoring Loop",
-    icon: <Zap className="h-5 w-5 text-slate-300" />,
-    body: "Revisits validated sources every three hours. Cleans raw streams and extracts high-confidence actionable opportunities.",
-  },
-  {
-    title: "Private Command Center",
-    icon: <Shield className="h-5 w-5 text-slate-300" />,
-    body: "A secure, owner-controlled environment holding real opportunities, detailed AI scoring breakdowns, and run history.",
-  },
-];
-
-const stackItems = [
-  { title: "Automation core", tech: "n8n Engine", body: "Schedules, branching, and routing live in a hardened workflow.", icon: <Activity className="h-5 w-5 text-accent-cyan" /> },
-  { title: "Edge delivery", tech: "Optimized Node", body: "Handles the protected entry point while keeping the self-hosted setup clean.", icon: <Zap className="h-5 w-5 text-accent-mint" /> },
-  { title: "Storage layer", tech: "PostgreSQL", body: "Built from day one around structured, relational enterprise records.", icon: <Database className="h-5 w-5 text-accent-blue" /> },
-  { title: "Rapid alerting", tech: "Encrypted Queues", body: "High-confidence leads bypass the dashboard for immediate action.", icon: <Radar className="h-5 w-5 text-accent-amber" /> },
-];
-
-const futureTracks = [
-  "Advanced source adapters beyond standard networks",
-  "Cross-platform identity deduplication via fingerprinting",
-  "Dynamic source reputation and decay weighting",
-  "Explainable, token-level AI score breakdowns per lead",
-  "Granular access controls for trusted external collaborators",
-];
-
-// Animation Variants
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
-};
 
 export default function LandingPage() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const sectionsRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+
+    const heading = hero.querySelector("h1");
+    const subtitle = hero.querySelectorAll("p");
+    const buttons = hero.querySelector(".hero-buttons");
+    const indicator = hero.querySelector(".scroll-indicator");
+
+    const targets = [heading, subtitle[0], subtitle[1], subtitle[2], buttons, indicator].filter(Boolean);
+    gsap.set(targets, { opacity: 0, y: 15 });
+
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    if (heading) tl.to(heading, { opacity: 1, y: 0, duration: 0.8 }, 0.2);
+    if (subtitle[0]) tl.to(subtitle[0], { opacity: 1, y: 0, duration: 0.7 }, 0.4);
+    if (subtitle[1]) tl.to(subtitle[1], { opacity: 1, y: 0, duration: 0.6 }, 0.55);
+    if (subtitle[2]) tl.to(subtitle[2], { opacity: 1, y: 0, duration: 0.5 }, 0.65);
+    if (buttons) tl.to(buttons, { opacity: 1, y: 0, duration: 0.6 }, 0.8);
+    if (indicator) tl.to(indicator, { opacity: 1, duration: 0.5 }, 1.2);
+  }, []);
+
+  useLayoutEffect(() => {
+    const container = sectionsRef.current;
+    if (!container) return;
+
+    const cards = container.querySelectorAll(".section-card");
+    cards.forEach((card, i) => {
+      gsap.fromTo(
+        card,
+        { opacity: 0, y: 60 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: card,
+            start: "top 85%",
+            end: "top 40%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach((t) => t.kill());
+    };
+  }, []);
+
   return (
-    <div className="relative space-y-24 pb-20">
-      
-      {/* 
-        HERO SECTION
-        This acts as the high-end entrance with moving grids, orbs, and centered text
-      */}
-      <section className="relative flex min-h-[60vh] sm:min-h-[85vh] flex-col items-center justify-center overflow-hidden px-4 pt-4 sm:pt-20 text-center">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 z-0 bg-radar-grid animate-pan-grid opacity-20 pointer-events-none" />
-        {/* On mobile, we use lower blur values and transform-gpu to prevent frame drops */}
-        <div className="absolute left-1/4 top-1/4 z-0 h-[250px] w-[250px] sm:h-[400px] sm:w-[400px] animate-float-orb rounded-full bg-accent-cyan/15 blur-[60px] sm:blur-[120px] transform-gpu pointer-events-none" />
-        <div className="absolute right-1/4 top-1/3 z-0 h-[200px] w-[200px] sm:h-[350px] sm:w-[350px] animate-float-orb-delayed rounded-full bg-accent-mint/15 blur-[50px] sm:blur-[100px] transform-gpu pointer-events-none" />
-        
-        {/* Content */}
-        <motion.div 
-          className="relative z-10 mx-auto max-w-4xl"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.div variants={fadeUp} className="mb-6 flex flex-col items-center gap-3">
-            <span className="flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-medium uppercase tracking-widest text-accent-cyan backdrop-blur-md">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-cyan opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-cyan"></span>
-              </span>
-              Lead Discovery Engine
-            </span>
-            <a
-              href="https://sadokportfolio.mooo.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 flex items-center gap-2 rounded-full border border-white/5 bg-white/[0.02] px-3 py-1 backdrop-blur-sm shadow-[0_0_15px_rgba(0,0,0,0.2)] transition-all hover:border-white/10 hover:bg-white/[0.04] hover:shadow-[0_0_24px_rgba(56,189,248,0.12)]"
-            >
-              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400 sm:text-xs">
-                Built by <span className="font-bold bg-gradient-to-r from-accent-cyan to-accent-mint bg-clip-text text-transparent">sadok</span>
-              </span>
-            </a>
-          </motion.div>
-
-          <motion.h1 variants={fadeUp} className="text-4xl leading-[1.15] font-bold tracking-tight text-white sm:text-7xl lg:text-8xl">
-            Stop searching for clients. Let us <span className="whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-mint">find them for you.</span>
-          </motion.h1>
-
-          <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-2xl text-[15px] sm:text-lg leading-relaxed text-slate-300 sm:text-xl">
-            A self-hosted intelligence system built for operators. We discover closed communities, validate high-intent opportunities using AI, and route the most profitable matches to a private command center.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="mt-8 sm:mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row w-full sm:w-auto px-4 sm:px-0">
-            <Link 
-              href="/request-access" 
-              className="group relative flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 sm:py-4 text-[15px] sm:text-base font-semibold text-slate-950 transition-all hover:bg-slate-100 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]"
-            >
-              Request Access
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link 
-              href="/login" 
-              className="group flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-8 py-3.5 sm:py-4 text-[15px] sm:text-base font-medium text-white backdrop-blur-md transition-all hover:border-white/30 hover:bg-slate-800/50"
-            >
-              <Lock className="h-4 w-4 text-slate-400 group-hover:text-white transition-colors" />
-              Sign in to workspace
-            </Link>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* 
-        BENTO BOX WORKFLOW
-      */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="mb-10 sm:mb-12 text-center"
-        >
-          <p className="section-kicker">The Pipeline</p>
-          <h2 className="section-heading mt-4">One workflow. Continuous extraction.</h2>
-        </motion.div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {signalStages.map((stage, index) => (
-            <motion.div
-              key={stage.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
-              className="group relative overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/5 bg-white/[0.03] p-6 sm:p-8 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-300 hover:border-accent-cyan/30 hover:bg-white/[0.05] hover:shadow-glow-blue transform-gpu"
-            >
-              <div className="mb-6 inline-flex rounded-2xl bg-white/[0.03] p-3">
-                {stage.icon}
-              </div>
-              <h3 className="text-xl font-medium text-white">{stage.name}</h3>
-              <p className="copy-muted mt-3">{stage.body}</p>
-            </motion.div>
-          ))}
+    <>
+      {/* ============ HERO ============ */}
+      <section
+        ref={heroRef}
+        className="relative flex min-h-[calc(100vh-57px)] items-center overflow-hidden border-b border-zinc-800/50"
+      >
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/3 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/5 blur-[120px]" />
+          <div className="absolute right-1/4 top-1/4 h-[400px] w-[400px] rounded-full bg-purple-500/5 blur-[120px]" />
         </div>
-      </section>
 
-      {/* 
-        SYSTEM STRUCTURE 
-      */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-8">
-        <div className="rounded-[32px] sm:rounded-[40px] border border-white/10 bg-slate-950/60 p-6 sm:p-12 lg:p-16 relative overflow-hidden shadow-glow-blue sm:shadow-glow">
-          {/* Subtle bg glow - removed on extreme small screens for perf */}
-          <div className="hidden sm:block absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-accent-cyan/10 blur-[80px] transform-gpu pointer-events-none" />
-          
-          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+        <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-8">
+          <h1 className="opacity-0 mx-auto mt-8 max-w-5xl text-center text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+            Know where the <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">market is moving</span>.
+          </h1>
+
+          <p className="opacity-0 mx-auto mt-6 max-w-2xl text-center text-lg text-zinc-400 sm:text-xl">
+            The future of career intelligence.
+          </p>
+
+          <p className="opacity-0 mx-auto mt-3 max-w-xl text-center text-base text-zinc-500">
+            Built for developers who refuse to guess.
+          </p>
+
+          <p className="opacity-0 mx-auto mt-2 max-w-xl text-center text-sm text-zinc-600">
+            Stay ahead. See what companies value before everyone else.
+          </p>
+
+          <div className="hero-buttons opacity-0 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <TransitionLink
+              href="/request-access"
+              className="group inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-semibold text-zinc-950 transition-all hover:bg-zinc-200 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]"
             >
-              <p className="section-kicker">Architecture</p>
-              <h2 className="section-heading mt-4">Built strictly for private operations.</h2>
-              <p className="copy-muted mt-5 text-lg">
-                The public interface exists solely to explain the engine. The protected layers are designed exclusively to isolate, analyze, and act on raw opportunity data without public exposure.
-              </p>
-            </motion.div>
+              Start exploring
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </TransitionLink>
+            <TransitionLink
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-8 py-4 text-base font-medium text-zinc-300 transition-all hover:border-zinc-500 hover:text-white"
+            >
+              <Lock className="h-4 w-4" />
+              Sign in
+            </TransitionLink>
+          </div>
 
-            <div className="flex flex-col gap-4 relative z-10">
-              {systemLayers.map((layer, index) => (
-                <motion.div
-                  key={layer.title}
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 0.1 }}
-                  transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
-                  className="flex items-start gap-4 rounded-3xl border border-white/5 bg-white/[0.03] p-6 backdrop-blur-sm transition-colors hover:border-white/15"
-                >
-                  <div className="mt-1 shrink-0 rounded-full bg-white/[0.05] p-2">
-                    {layer.icon}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-white">{layer.title}</h3>
-                    <p className="copy-muted mt-2">{layer.body}</p>
-                  </div>
-                </motion.div>
-              ))}
+          <div className="scroll-indicator opacity-0 mt-16 flex justify-center">
+            <div className="h-10 w-6 rounded-full border border-zinc-700 flex items-start justify-center p-1.5">
+              <div className="h-2 w-2 rounded-full bg-zinc-400 animate-bounce" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 
-        INFRASTRUCTURE & ROADMAP 
-      */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-8">
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Tech Stack */}
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="flex flex-col rounded-[32px] sm:rounded-[40px] border border-white/5 bg-slate-900/30 p-6 sm:p-10"
-          >
-            <p className="section-kicker mb-6">Stack & Security</p>
-            <div className="grid gap-4 sm:grid-cols-2 flex-grow">
-              {stackItems.map((item) => (
-                <div key={item.tech} className="rounded-3xl bg-slate-950/50 p-5 border border-white/[0.02]">
-                  <div className="mb-4 inline-flex rounded-xl bg-white/[0.03] p-2.5">
-                    {item.icon}
-                  </div>
-                  <h4 className="text-white font-medium">{item.title}</h4>
-                  <p className="text-xs uppercase tracking-wider text-accent-cyan mt-1 mb-3">{item.tech}</p>
-                  <p className="text-sm text-slate-400">{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Roadmap */}
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.1 }}
-            transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
-            className="rounded-[32px] sm:rounded-[40px] border border-white/5 bg-slate-900/30 p-6 sm:p-10 relative overflow-hidden"
-          >
-            <div className="hidden sm:block absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-accent-blue/10 blur-[80px] transform-gpu pointer-events-none" />
-            <div className="relative z-10">
-              <p className="section-kicker">Evolution Track</p>
-              <h2 className="text-2xl font-semibold text-white mt-4 mb-8">What we are building next</h2>
-              <div className="space-y-4">
-                {futureTracks.map((item, i) => (
-                  <div key={i} className="group flex items-start gap-4 rounded-2xl bg-white/[0.03] border border-white/[0.02] p-4 transition-colors hover:bg-white/[0.05]">
-                    <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent-mint/30 bg-accent-mint/10 text-accent-mint group-hover:bg-accent-mint group-hover:text-slate-950 transition-colors">
-                      <div className="h-1.5 w-1.5 rounded-full bg-current" />
-                    </div>
-                    <span className="text-sm text-slate-300">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* 
-        FINAL CTA 
-      */}
-      <section className="mx-auto max-w-5xl px-4 sm:px-8 pt-10">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative overflow-hidden rounded-[32px] sm:rounded-[40px] border border-accent-cyan/20 bg-slate-950 p-8 text-center shadow-[0_0_60px_rgba(56,189,248,0.15)] sm:p-16"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-accent-cyan/10 to-transparent opacity-50" />
-          <div className="relative z-10">
-            <Lock className="mx-auto h-12 w-12 text-accent-cyan mb-6" />
-            <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              Closed intelligence.
-            </h2>
-            <p className="mx-auto mt-6 max-w-xl text-lg text-slate-400">
-              Access is strictly owner-approved. Request a secure account to review leads, inspect AI scoring, and act on live signals.
-            </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link 
-                href="/request-access" 
-                className="relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full p-[1px]"
+      {/* ============ SECTIONS ============ */}
+      <div ref={sectionsRef} className="mx-auto max-w-7xl px-4 py-24 sm:px-8 sm:py-32">
+        <div className="space-y-32">
+          {sections.map((section, i) => {
+            const Icon = section.icon;
+            return (
+              <section
+                key={section.title}
+                className={`section-card flex flex-col items-center gap-12 ${
+                  i % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
+                }`}
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-accent-cyan via-accent-mint to-accent-blue animate-spin-slow" />
-                <span className="relative flex items-center gap-2 rounded-full bg-slate-950 px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-slate-900">
-                  Request Private Access
-                  <ChevronRight className="h-4 w-4" />
-                </span>
-              </Link>
-            </div>
+                <div className="flex-1">
+                  <div className="panel p-8 sm:p-12">
+                    <div className="mb-6 inline-flex rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-3 text-cyan-400">
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                      {section.title}
+                    </h2>
+                    <p className="copy-muted mt-4 max-w-xl">{section.body}</p>
+                  </div>
+                </div>
+                <div className="flex-1 text-center">
+                  <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/50 sm:h-52 sm:w-52">
+                    <span className="text-7xl font-bold tracking-tight text-zinc-800 sm:text-8xl">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ============ FOOTER CTA ============ */}
+      <section className="border-t border-zinc-800/50">
+        <div className="mx-auto max-w-5xl px-4 py-24 text-center sm:px-8 sm:py-32">
+          <Sparkles className="mx-auto h-10 w-10 text-cyan-400" />
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Your next opportunity starts long before you apply.
+          </h2>
+          <div className="mt-10 flex justify-center">
+            <TransitionLink
+              href="/request-access"
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl p-px"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500" />
+              <span className="relative inline-flex items-center gap-2 rounded-[11px] bg-zinc-950 px-8 py-4 text-base font-semibold text-white transition-all hover:bg-zinc-900">
+                Start exploring
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </TransitionLink>
           </div>
-        </motion.div>
+        </div>
       </section>
 
-    </div>
+      {/* ============ FOOTER ============ */}
+      <footer className="border-t border-zinc-800/50 py-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-8">
+          <div className="flex items-center gap-3">
+            <img src="/paragon.png" alt="" className="h-5 w-auto" />
+            <span className="text-sm font-semibold text-white">Paragon</span>
+          </div>
+          <p className="text-sm text-zinc-500">
+            Market intelligence for developers who refuse to guess.
+          </p>
+          <div className="flex items-center gap-4 text-sm text-zinc-500">
+            <TransitionLink href="/login" className="transition-colors hover:text-white">Sign in</TransitionLink>
+            <TransitionLink href="/request-access" className="transition-colors hover:text-white">Request access</TransitionLink>
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }

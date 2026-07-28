@@ -7,7 +7,7 @@ const { Pool } = pg;
 const DEFAULT_HEADERS = {
   "user-agent":
     process.env.REDDIT_USER_AGENT ||
-    "radarX-reddit-radar/1.0 (+https://www.reddit.com; contact: admin@example.com)",
+    "paragon-reddit-radar/1.0 (+https://www.reddit.com; contact: admin@example.com)",
   accept: "application/json,text/plain,*/*",
   "accept-language": "en-US,en;q=0.9",
   pragma: "no-cache",

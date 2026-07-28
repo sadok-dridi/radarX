@@ -15,7 +15,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center">
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center" data-animate>
         <p className="text-sm text-red-200">Invalid or missing reset token.</p>
         <Link
           href="/forgot-password"
@@ -47,7 +47,7 @@ function ResetPasswordForm() {
 
   if (status === "success") {
     return (
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center">
+      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center" data-animate>
         <p className="text-sm text-emerald-100">{message}</p>
         <Link
           href="/login"
@@ -60,7 +60,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+    <form onSubmit={handleSubmit} className="mt-8 space-y-6" data-animate>
       <div>
         <label htmlFor="password" className="block text-sm text-slate-300">
           New Password
@@ -116,14 +116,13 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-xl items-center pt-8 sm:pt-0">
+    <div className="mx-auto flex min-h-[calc(100vh-57px)] max-w-xl items-center pt-8 sm:pt-0">
       <div className="panel w-full p-6 sm:p-8">
-        <p className="section-kicker">Account Recovery</p>
-        <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white">Create New Password</h1>
-        <p className="mt-4 text-sm leading-7 text-slate-300">
+        <p className="section-kicker" data-animate>Account Recovery</p>
+        <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white" data-animate>Create New Password</h1>
+        <p className="mt-4 text-sm leading-7 text-slate-300" data-animate>
           Please enter your new password below.
         </p>
-        
         <Suspense fallback={<div className="mt-8 text-center text-slate-400">Loading...</div>}>
           <ResetPasswordForm />
         </Suspense>

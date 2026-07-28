@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { forgotPasswordAction } from "@/actions/auth/forgot-password";
-import Link from "next/link";
+import { TransitionLink } from "@/components/layout/page-transition";
 import { clsx } from "clsx";
 
 export default function ForgotPasswordPage() {
@@ -27,26 +27,26 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-xl items-center pt-8 sm:pt-0">
+    <div className="mx-auto flex min-h-[calc(100vh-57px)] max-w-xl items-center pt-8 sm:pt-0">
       <div className="panel w-full p-6 sm:p-8">
-        <p className="section-kicker">Account Recovery</p>
-        <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white">Reset Password</h1>
-        <p className="mt-4 text-sm leading-7 text-slate-300">
+        <p className="section-kicker" data-animate>Account Recovery</p>
+        <h1 className="mt-4 text-4xl tracking-[-0.05em] text-white" data-animate>Reset Password</h1>
+        <p className="mt-4 text-sm leading-7 text-slate-300" data-animate>
           Enter your email address and we&apos;ll send you a link to reset your password.
         </p>
 
         {status === "success" ? (
-          <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center">
+          <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center" data-animate>
             <p className="text-sm text-emerald-100">{message}</p>
-            <Link
+            <TransitionLink
               href="/login"
               className="mt-6 block w-full rounded-full bg-white px-5 py-3 font-medium text-slate-950 transition hover:bg-slate-200"
             >
               Return to Login
-            </Link>
+            </TransitionLink>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6" data-animate>
             <div>
               <label htmlFor="email" className="block text-sm text-slate-300">
                 Email address
@@ -79,9 +79,9 @@ export default function ForgotPasswordPage() {
               {status === "loading" ? "Sending..." : "Send Reset Link"}
             </button>
             <div className="text-center">
-              <Link href="/login" className="text-sm text-slate-400 hover:text-white transition">
+              <TransitionLink href="/login" className="text-sm text-slate-400 hover:text-white transition">
                 Back to Login
-              </Link>
+              </TransitionLink>
             </div>
           </form>
         )}

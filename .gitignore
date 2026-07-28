@@ -33,3 +33,4 @@ scripts/*
 !scripts/reddit-radar-worker.mjs
 test-*.js
 AGENTS.md
+PUBLIC_PAGES_ARCHIVE.md

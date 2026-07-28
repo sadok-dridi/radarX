@@ -52,7 +52,7 @@ export async function sendPasswordResetEmail(input: { to: string; resetLink: str
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #020617; color: #f8fafc; border-radius: 16px;">
         <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 24px; color: #ffffff;">Reset your password</h2>
-        <p style="font-size: 16px; line-height: 1.6; color: #cbd5e1; margin-bottom: 16px;">You recently requested to reset your password for your RadarX account.</p>
+        <p style="font-size: 16px; line-height: 1.6; color: #cbd5e1; margin-bottom: 16px;">You recently requested to reset your password for your Paragon account.</p>
         <p style="font-size: 16px; line-height: 1.6; color: #cbd5e1; margin-bottom: 32px;">Click the button below to reset it. This link is only valid for 1 hour.</p>
         <a href="${input.resetLink}" style="display: inline-block; padding: 14px 28px; background-color: #ffffff; color: #020617; text-decoration: none; border-radius: 9999px; font-weight: 500; font-size: 16px; text-align: center;">Reset Password</a>
         <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
